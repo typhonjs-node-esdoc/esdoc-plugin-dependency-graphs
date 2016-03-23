@@ -1,2 +1,2 @@
 # esdoc-plugin-jspm-dependency-graph
-A plugin for ESDoc that enables end to end documentation linking JSPM / SystemJS managed packages creating package dependency graphs w/ D3
+A plugin for ESDoc that adds D3 interactive dependency graphs for packages and source code managed by JSPM / SystemJS.
