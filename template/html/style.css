@@ -109,3 +109,9 @@ path.link.resolved {
    border-radius: 7px;
    z-index: 10;
 }
+
+.flex-center-left {
+   display: flex;
+   align-items: center;
+   justify-content: left;
+}

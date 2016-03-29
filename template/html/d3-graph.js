@@ -44,6 +44,7 @@
       $('.control-level input').on('change', onControlLevelChanged);
       $('.control-deps input').on('click', onControlDepsClicked);
       $('.control-links input').on('click', onControlLinksClicked);
+      $('.control-menu li').on('click', onControlMenuClicked);
 
       zoom = d3.behavior.zoom();
 
@@ -116,7 +117,7 @@
       // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
       centerGraph(zoomFit, 1000, 4000);
 
-      d3.select(window).on('resize', resize);
+      d3.select(window).on('resize', onResize);
    }
 
    /**
@@ -291,7 +292,7 @@
       renderGraph();
 
       // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
-      centerGraph(zoomFit, 1000, 4000);
+      centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 4000);
    }
 
    function onControlLevelChanged()
@@ -302,13 +303,30 @@
       renderGraph({ redrawOnly: true });
 
       // Center graph w/ zoom fit w/ 200 millisecond transition applied after half second delay for debounce.
-      centerGraph(zoomFit, 200, 500);
+      centerGraph(zoomFit, 200, data.allNodesFixed ? 0 : 500);
    }
 
    function onControlLinksClicked()
    {
       reverseGraphLinks();
 
+      renderGraph({ redrawOnly: true });
+   }
+
+   function onControlMenuClicked()
+   {
+      switch ($(this).data('action'))
+      {
+         case 'freeze_all_nodes':
+            setNodesFixed(true);
+            break;
+
+         case 'unfreeze_all_nodes':
+            setNodesFixed(false);
+            break;
+      }
+
+      centerGraph(zoomFit());
       renderGraph({ redrawOnly: true });
    }
 
@@ -371,6 +389,21 @@
 
       // Highlight related nodes
       fadeRelatedNodes(d, 1, nodes, links);
+   }
+
+   function onResize()
+   {
+      graphWidth = window.innerWidth;
+      graphHeight = window.innerHeight;
+
+      graph.attr('width', graphWidth).attr('height', graphHeight);
+
+      layout.size([graphWidth, graphHeight]).resume();
+
+      // Resets any fixed node state.
+      if (nodes) { nodes.each(function(d) { d3.select(this).classed('fixed', d.fixed = false); }); }
+
+      centerGraph(zoomFit());
    }
 
    function onTick()
@@ -503,21 +536,6 @@
       if (options.redrawOnly) { layout.alpha(0.01); }
    }
 
-   function resize()
-   {
-      graphWidth = window.innerWidth;
-      graphHeight = window.innerHeight;
-
-      graph.attr('width', graphWidth).attr('height', graphHeight);
-
-      layout.size([graphWidth, graphHeight]).resume();
-
-      // Resets any fixed node state.
-      if (nodes) { nodes.each(function(d) { d3.select(this).classed('fixed', d.fixed = false); }); }
-
-      centerGraph(zoomFit());
-   }
-
    /**
     * Reverses all graph links.
     */
@@ -534,6 +552,17 @@
             link.target = linkSource;
          });
       }
+   }
+
+   function setNodesFixed(fixed)
+   {
+      // Resets any fixed node state.
+      if (nodes) { nodes.each(function(d) { d3.select(this).classed('fixed', d.fixed = fixed); }); }
+
+      // Copy existing sim data to any package scope that contains the same node ID.
+      for (var key in dataPackageMap) { dataPackageMap[key].nodes.forEach(function(node) { node.fixed = fixed; }); }
+
+      if (data) { data.allNodesFixed = fixed; }
    }
 
    function updateGraphData()
@@ -579,15 +608,23 @@
          }
       }
 
+      var allNodesFixed = true;
+
       // Set new data
       data =
       {
          directed: dataPackageMap[packageScope].directed,
          multigraph: dataPackageMap[packageScope].multigraph,
          graph: dataPackageMap[packageScope].graph,
-         nodes: dataPackageMap[packageScope].nodes.filter(function(node) { return node.minLevel <= currentLevel; }),
-         links: dataPackageMap[packageScope].links.filter(function(link) { return link.minLevel <= currentLevel; })
+         links: dataPackageMap[packageScope].links.filter(function(link) { return link.minLevel <= currentLevel; }),
+         nodes: dataPackageMap[packageScope].nodes.filter(function(node)
+         {
+            if (typeof node.fixed === 'undefined' || node.fixed === false) { allNodesFixed = false; }
+            return node.minLevel <= currentLevel;
+         })
       };
+
+      data.allNodesFixed = allNodesFixed;
 
       // Update control level UI based on current and max level for given package scope.
       $('.control-level input').attr({ max: maxLevel });
