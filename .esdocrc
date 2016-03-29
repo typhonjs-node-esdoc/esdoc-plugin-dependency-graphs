@@ -1,0 +1,11 @@
+{
+   "title": "esdoc-plugin-jspm-dependency-graph",
+   "source": "src",
+   "destination": "docs",
+   "plugins":
+   [
+      { "name": "esdoc-plugin-jspm" }
+   ],
+
+   "manual": { "changelog": ["./CHANGELOG.md"] }
+}

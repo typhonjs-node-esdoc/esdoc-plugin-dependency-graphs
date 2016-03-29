@@ -1,0 +1,83 @@
+{
+  "name": "esdoc-plugin-jspm-dependency-graph",
+  "version": "0.0.1",
+  "homepage": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm-dependency-graph/",
+  "description": "A plugin for ESDoc that enables end to end documentation linking JSPM / SystemJS managed packages creating package dependency graphs w/ D3.",
+  "license": "MPL-2.0",
+  "author": {
+    "name": "Mike Leahy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm-dependency-graph/esdoc-plugin-jspm-dependency-graph.git"
+  },
+  "maintainers": [
+    {
+      "name": "Mike Leahy",
+      "email": "support@js.typhonrt.org"
+    }
+  ],
+  "dependencies": {
+    "fs-extra": "^0.26.0",
+    "typhonjs-config-jspm-parse": "^0.5.0",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "jspm": "^0.16.0",
+    "typhonjs-config-eslint": "^0.4.0",
+    "typhonjs-npm-build-test": "^0.1.0"
+  },
+  "engines": {
+    "npm": ">=3.x"
+  },
+  "scripts": {
+    "build": "babel-node ./node_modules/typhonjs-npm-scripts-build-babel/scripts/build.js",
+    "esdoc": "esdoc -c .esdocrc",
+    "eslint": "eslint .",
+    "prepublish": "babel-node ./node_modules/typhonjs-npm-scripts-publish/scripts/prepublish.js",
+    "test": "babel-node ./node_modules/typhonjs-npm-scripts-test-mocha/scripts/mocha.js",
+    "test-coverage": "babel-node ./node_modules/typhonjs-npm-scripts-test-mocha/scripts/mocha-istanbul.js"
+  },
+  "jspm": {
+    "directories": {},
+    "dependencies": {
+      "backbone": "github:typhonjs-backbone-parse/backbone-parse-es6@master"
+    },
+    "devDependencies": {
+      "babel": "npm:babel-core@^5.8.35",
+      "babel-runtime": "npm:babel-runtime@^5.8.35",
+      "core-js": "npm:core-js@^1.2.6"
+    }
+  },
+  "typhonjs": {
+    "scm": {
+      "autoInstallJSPM": false
+    }
+  },
+  "keywords": [
+    "esdoc",
+    "jsdoc",
+    "jspm",
+    "systemjs",
+    "plugin",
+    "package",
+    "dependency",
+    "graph",
+    "document",
+    "documentation",
+    "ES6",
+    "ES2015",
+    "ECMAScript6",
+    "ECMAScript2015"
+  ],
+  "main": "dist/plugin.js",
+  "files": [
+    "dist",
+    "src",
+    "AUTHORS.md"
+  ],
+  "directories": {},
+  "bugs": {
+    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm-dependency-graph/issues"
+  }
+}

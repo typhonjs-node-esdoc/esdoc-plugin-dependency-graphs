@@ -1,0 +1,111 @@
+body {
+   background: #fff;
+   padding:0;
+   margin:0;
+   font-family:helvetica,arial;
+   overflow: hidden;
+}
+
+.graph {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width:100%;
+   height: 100%;
+   overflow: hidden;
+}
+
+svg {
+   position: fixed;
+   top: 0;
+   left: 0;
+   height: 100%;
+   width: 100%;
+   cursor: move;
+}
+
+g.dimmed  {
+   stroke-opacity: 0.05;
+}
+
+g.dimmed text.shadow {
+   stroke-opacity: 0;
+}
+
+circle {
+   fill: #ccc;
+   stroke: #333;
+   stroke-width: 1.5px;
+   cursor: hand;
+}
+
+circle.npm {
+   fill: #ff00ff;
+}
+
+circle.github {
+   fill: #00ff00;
+}
+
+circle.selected {
+   fill: #b94431;
+}
+
+text {
+   font: 10px sans-serif;
+   pointer-events: none;
+}
+
+text.shadow {
+   stroke: #fff;
+   stroke-width: 3px;
+   stroke-opacity: .8;
+}
+
+path.link {
+   fill: none;
+   stroke: #666;
+   stroke-width: 1.5px;
+}
+
+path.link.licensing {
+   stroke: green;
+}
+
+path.link.resolved {
+   stroke-dasharray: 0,2 1;
+}
+
+.control-button {
+   position: relative;
+   float: left;
+   background: rgba(240, 240, 240, 0.9);
+   padding: 5px;
+   margin-top: 5px;
+   margin-left: 10px;
+   border-radius: 7px;
+   z-index: 10;
+}
+
+.control-level {
+   position: relative;
+   float: left;
+   width: 200px;
+   background: rgba(240, 240, 240, 0.9);
+   padding: 16px 5px 16px 5px;
+   margin-top: 5px;
+   margin-left: 10px;
+   border-radius: 7px;
+   z-index: 10;
+}
+
+.control-toggles {
+   position: relative;
+   float: left;
+   background: rgba(240, 240, 240, 0.9);
+   padding: 13px 18px 13px 18px;
+   margin-top: 5px;
+   margin-left: 10px;
+   border-radius: 7px;
+   z-index: 10;
+}
