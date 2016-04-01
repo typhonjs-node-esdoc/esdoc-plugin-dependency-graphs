@@ -10,6 +10,17 @@
    var graphWidth, graphHeight;
    var data;
 
+   var appOptions =
+   {
+      currentLevel: 0,
+      currentScope: 'all', // Stores package / source scope: main, dev, all
+      maxDepthSticky: true,
+      showTableView: false,
+      unfreezeOnResize: true
+   };
+
+   var appMenuToggleOptions = ['maxDepthSticky', 'showTableView', 'unfreezeOnResize'];
+
    var dataPackageMap =
    {
       'all': getPackageDataAll(),
@@ -39,12 +50,17 @@
 
    function bootstrap()
    {
+      updateMenuUI();
+
       // Controllers
       $('.control-zoom button').on('click', onControlZoomClicked);
       $('.control-level input').on('change', onControlLevelChanged);
       $('.control-deps input').on('click', onControlDepsClicked);
       $('.control-links input').on('click', onControlLinksClicked);
       $('.control-menu li').on('click', onControlMenuClicked);
+
+      appOptions.currentLevel = parseInt($('.control-level input').val());
+      appOptions.currentScope = $('.control-deps input:radio[name=dep]:checked').val();
 
       zoom = d3.behavior.zoom();
 
@@ -286,6 +302,28 @@
 
    function onControlDepsClicked()
    {
+      // Do nothing if scope has not changed
+      if (this.value === appOptions.currentScope) { return; }
+
+      // If max depth is set to sticky and current level is equal max level of old scope then set max level for
+      // the new scope.
+      if (appOptions.maxDepthSticky && appOptions.currentLevel === dataPackageMap[appOptions.currentScope].maxLevel)
+      {
+         appOptions.currentLevel = dataPackageMap[this.value].maxLevel
+      }
+
+      appOptions.currentScope = this.value;
+
+      var maxLevel = dataPackageMap[appOptions.currentScope].maxLevel;
+
+      // Adjust current level if it is greater than max level for current scope.
+      if (appOptions.currentLevel > maxLevel) { appOptions.currentLevel = maxLevel; }
+
+      // Update control level UI based on current and max level for given package scope.
+      $('.control-level input').attr({ max: maxLevel });
+      $('.control-level input').val(appOptions.currentLevel);
+      $('.control-level label').html(appOptions.currentLevel);
+
       // Load graph data
       updateGraphData();
 
@@ -297,6 +335,11 @@
 
    function onControlLevelChanged()
    {
+      appOptions.currentLevel = parseInt(this.value);
+
+      $('.control-level input').val(appOptions.currentLevel);
+      $('.control-level label').html(appOptions.currentLevel);
+
       // Load graph data
       updateGraphData();
 
@@ -317,14 +360,28 @@
    {
       switch ($(this).data('action'))
       {
-         case 'freeze_all_nodes':
+         case 'freezeAllNodes':
             setNodesFixed(true);
             break;
 
-         case 'unfreeze_all_nodes':
+         case 'unfreezeAllNodes':
             setNodesFixed(false);
             break;
+
+         case 'unfreezeOnResize':
+            appOptions.unfreezeOnResize = !appOptions.unfreezeOnResize;
+            break;
+
+         case 'showTableView':
+            appOptions.showTableView = !appOptions.showTableView;
+            break;
+
+         case 'maxDepthSticky':
+            appOptions.maxDepthSticky = !appOptions.maxDepthSticky;
+            break;
       }
+
+      updateMenuUI();
 
       centerGraph(zoomFit());
       renderGraph({ redrawOnly: true });
@@ -400,8 +457,8 @@
 
       layout.size([graphWidth, graphHeight]).resume();
 
-      // Resets any fixed node state.
-      if (nodes) { nodes.each(function(d) { d3.select(this).classed('fixed', d.fixed = false); }); }
+      // Potentially resets any fixed node state.
+      if (appOptions.unfreezeOnResize) { setNodesFixed(false); }
 
       centerGraph(zoomFit());
    }
@@ -567,20 +624,6 @@
 
    function updateGraphData()
    {
-      var packageScope = $('.control-deps input:radio[name=dep]:checked').val();
-
-      if (typeof dataPackageMap[packageScope] === 'undefined')
-      {
-         throw new Error("updateGraphData error: Unknown package scope '" + packageScope + "'.");
-      }
-
-      var currentLevel = parseInt($('.control-level input').val());
-      var maxLevel = dataPackageMap[packageScope].maxLevel;
-
-      currentLevel = typeof currentLevel === 'number' ? currentLevel : 9999999;
-
-      if (currentLevel > maxLevel) { currentLevel = maxLevel; }
-
       // Copy existing data / node parameters to new filtered data;
       if (data)
       {
@@ -613,23 +656,30 @@
       // Set new data
       data =
       {
-         directed: dataPackageMap[packageScope].directed,
-         multigraph: dataPackageMap[packageScope].multigraph,
-         graph: dataPackageMap[packageScope].graph,
-         links: dataPackageMap[packageScope].links.filter(function(link) { return link.minLevel <= currentLevel; }),
-         nodes: dataPackageMap[packageScope].nodes.filter(function(node)
+         directed: dataPackageMap[appOptions.currentScope].directed,
+         multigraph: dataPackageMap[appOptions.currentScope].multigraph,
+         graph: dataPackageMap[appOptions.currentScope].graph,
+         links: dataPackageMap[appOptions.currentScope].links.filter(function(link)
+         {
+            return link.minLevel <= appOptions.currentLevel;
+         }),
+         nodes: dataPackageMap[appOptions.currentScope].nodes.filter(function(node)
          {
             if (typeof node.fixed === 'undefined' || node.fixed === false) { allNodesFixed = false; }
-            return node.minLevel <= currentLevel;
+            return node.minLevel <= appOptions.currentLevel;
          })
       };
 
       data.allNodesFixed = allNodesFixed;
+   }
 
-      // Update control level UI based on current and max level for given package scope.
-      $('.control-level input').attr({ max: maxLevel });
-      $('.control-level input').val(currentLevel);
-      $('.control-level label').html(currentLevel);
+   function updateMenuUI()
+   {
+      appMenuToggleOptions.forEach(function(key)
+      {
+         var icon = appOptions[key] ? 'check_box' : 'check_box_outline_blank';
+         $('.control-menu li[data-action=' + key + '] i').html(icon);
+      });
    }
 
    function zoomFit()
