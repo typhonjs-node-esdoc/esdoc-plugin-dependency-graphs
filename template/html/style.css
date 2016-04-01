@@ -120,7 +120,7 @@ path.link.resolved {
    float: left;
    background: rgba(240, 240, 240, 0.9);
    padding: 8px;
-   margin-top: 5px;
+   margin-top: 10px;
    margin-left: 10px;
    border-radius: 7px;
    z-index: 10;
@@ -140,4 +140,118 @@ path.link.resolved {
    height: 32px;
    line-height: 32px;
    padding: 0 8px;
+}
+
+.mdl-data-table
+{
+   background-color: rgba(255, 255, 255, 0.2);
+}
+
+.mdl-data-table tbody {
+   overflow: scroll;
+}
+
+.mdl-data-table tbody tr {
+   height: 14px;
+}
+
+.mdl-data-table tbody tr:hover
+{
+   /*background-color: rgba(32, 90, 112, 0.4);*/
+   background-color: rgba(255, 255, 255, 0.8);
+   cursor: pointer;
+}
+
+.mdl-data-table td, .mdl-data-table th
+{
+   height: 14px;
+   line-height: 14px;
+   padding: 4px 8px;
+   vertical-align: bottom;
+}
+
+.mdl-data-table thead th:hover
+{
+   /*background-color: rgba(255, 255, 255, 0.3);*/
+   cursor: default;
+}
+
+.mdl-data-table td:first-of-type, .mdl-data-table th:first-of-type
+{
+   padding-left: 12px;
+}
+
+.mdl-data-table td:last-of-type, .mdl-data-table th:last-of-type
+{
+   padding-right: 12px;
+}
+
+.mdl-data-table td:not(:first-child), .mdl-data-table th:not(:first-child)
+{
+   border-left: 1px solid rgba(100, 100, 100, 0.1);
+}
+
+
+/**
+ * Scrollbars
+ */
+::-webkit-scrollbar
+{
+   height: 10px !important;
+   overflow: visible !important;
+   width: 10px !important;
+}
+
+::-webkit-scrollbar-thumb
+{
+   background: -webkit-linear-gradient(left, rgba(190,190,190,0.8) 0%,rgba(205,205,205,0.8) 100%) !important;
+   background-clip: padding-box !important;
+   border: 2px solid transparent !important;
+   border-image: initial !important;
+   min-height: 28px !important;
+   padding: 100px 0 0 !important;
+   box-shadow: rgba(0, 0, 0, 0.0980392) 1px 1px 0 inset, rgba(0, 0, 0, 0.0666667) 0 -1px 0 inset !important;
+
+   -moz-border-radius: 5px !important;    /* Firefox 3.6-, removed in Firefox 13 */
+   -webkit-border-radius: 5px !important; /* Safari 4-, Chrome 3- */
+   border-radius: 5px !important;         /* Firefox 4+, Safari 5+, Chrome 4+, Opera 10.5+, IE9+ */
+}
+
+::-webkit-scrollbar-thumb:hover
+{
+   background: -webkit-linear-gradient(left, rgba(215,215,215,0.8) 0%,rgba(230,230,230,0.8) 100%) !important;
+   background-clip: padding-box !important;
+
+   -moz-border-radius: 5px !important;    /* Firefox 3.6-, removed in Firefox 13 */
+   -webkit-border-radius: 5px !important; /* Safari 4-, Chrome 3- */
+   border-radius: 5px !important;         /* Firefox 4+, Safari 5+, Chrome 4+, Opera 10.5+, IE9+ */
+}
+
+::-webkit-scrollbar-thumb:window-inactive
+{
+   background: -webkit-linear-gradient(left, rgba(58,58,58,1) 0%,rgba(80,80,80,1) 100%) !important;
+   background-clip: padding-box !important;
+
+   -moz-border-radius: 5px !important;    /* Firefox 3.6-, removed in Firefox 13 */
+   -webkit-border-radius: 5px !important; /* Safari 4-, Chrome 3- */
+   border-radius: 5px !important;         /* Firefox 4+, Safari 5+, Chrome 4+, Opera 10.5+, IE9+ */
+}
+
+::-webkit-scrollbar-button
+{
+   height: 0 !important;
+   width: 0 !important;
+}
+
+::-webkit-scrollbar-track
+{
+   background: rgba(0, 0, 0, 0.1) !important;
+   -moz-border-radius: 5px !important;    /* Firefox 3.6-, removed in Firefox 13 */
+   -webkit-border-radius: 5px !important; /* Safari 4-, Chrome 3- */
+   border-radius: 5px !important;         /* Firefox 4+, Safari 5+, Chrome 4+, Opera 10.5+, IE9+ */
+}
+
+::-webkit-scrollbar-corner
+{
+   background: transparent !important;
 }

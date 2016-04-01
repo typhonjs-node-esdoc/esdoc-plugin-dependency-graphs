@@ -3,9 +3,10 @@
    'use strict';
    /* eslint-disable */
 
-   var r = 10;
+   var circleRadius = 6;
    var minScaleExtent = 0.2, maxScaleExtent = 5;
    var graph, layout, zoom, nodes, links;
+   var selectedContextNode, selectedDragNode;
    var linkedByIndex = {};
    var graphWidth, graphHeight;
    var data;
@@ -59,7 +60,7 @@
       $('.control-links input').on('click', onControlLinksClicked);
       $('.control-menu li').on('click', onControlMenuClicked);
 
-      $('#contextpopup li').on('click', onNodeContextMenuClick);
+      $('#contextpopup li[data-action]').on('click', onNodeContextMenuClick);
 
       appOptions.currentLevel = parseInt($('.control-level input').val());
       appOptions.currentScope = $('.control-deps input:radio[name=dep]:checked').val();
@@ -74,10 +75,9 @@
 
       // Setup layout
       layout = d3.layout.force()
-       .alpha(0.001)
        .gravity(.05)
-       .charge(-400)
-       .linkDistance(100)
+       .charge(-300)
+       .linkDistance(80)
        .size([graphWidth, graphHeight])
        .on('tick', onTick);
 
@@ -132,6 +132,8 @@
 
       renderGraph();
 
+      updateTableUI();
+
       // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
       centerGraph(zoomFit, 1000, 4000);
 
@@ -164,10 +166,10 @@
 
          // Translate
          var centerTranslate =
-          [
-             (graphWidth / 2) - (graphWidth * newScale / 2),
-             (graphHeight / 2) - (graphHeight * newScale / 2)
-          ];
+         [
+            (graphWidth / 2) - (graphWidth * newScale / 2),
+            (graphHeight / 2) - (graphHeight * newScale / 2)
+         ];
 
          // Store values
          zoom
@@ -181,50 +183,15 @@
       }, delay);
    }
 
-   /**
-    * Gets a recycled SVG element from the pool, `svgElementMap`, or creates a new element for the given type. Any
-    * data specified by D3 will be copied to the element. Returns a function which is evaluated by D3.
-    *
-    * @param {string}   elementType - SVG element: `circle`, `g`, `path`, or `text`.
-    * @returns {*}
-    */
-   function getSVG(elementType)
+   function fadeRelatedNodes(d, selected, nodes, links)
    {
-      var returnVal;
-      var svgElement;
-      var cached;
+      var opacity = selected ? 0.1 : 1;
 
-      switch (elementType)
-      {
-         case 'circle':
-         case 'g':
-         case 'path':
-         case 'text':
-            returnVal = function(data)
-            {
-               svgElement = svgElementMap[elementType].pop();
+      var elm = findElementByNode('circle', d);
 
-               cached = svgElement != null;
+      // Highlight circle
+      elm.classed('selected', opacity < 1);
 
-               svgElement = svgElement != null ? svgElement : document.createElementNS('http://www.w3.org/2000/svg',
-                elementType);
-
-               // Copy data to SVG element.
-               if (typeof data === 'object') { for (var key in data) { svgElement.setAttribute(key, data[key]); } }
-
-               return svgElement;
-            };
-            break;
-
-         default:
-            throw new TypeError('getSVG error: unknown elementType.');
-      }
-
-      return returnVal;
-   }
-
-   function fadeRelatedNodes(d, opacity, nodes, links)
-   {
       // Clean
       $('path.link').removeAttr('data-show');
 
@@ -297,9 +264,61 @@
       return { x: xn, y: yn };
    }
 
+   /**
+    * Gets a recycled SVG element from the pool, `svgElementMap`, or creates a new element for the given type. Any
+    * data specified by D3 will be copied to the element. Returns a function which is evaluated by D3.
+    *
+    * @param {string}   elementType - SVG element: `circle`, `g`, `path`, or `text`.
+    * @returns {*}
+    */
+   function getSVG(elementType)
+   {
+      var returnVal;
+      var svgElement;
+      var cached;
+
+      switch (elementType)
+      {
+         case 'circle':
+         case 'g':
+         case 'path':
+         case 'text':
+            returnVal = function(data)
+            {
+               svgElement = svgElementMap[elementType].pop();
+
+               cached = svgElement != null;
+
+               svgElement = svgElement != null ? svgElement : document.createElementNS('http://www.w3.org/2000/svg',
+                elementType);
+
+               // Copy data to SVG element.
+               if (typeof data === 'object') { for (var key in data) { svgElement.setAttribute(key, data[key]); } }
+
+               return svgElement;
+            };
+            break;
+
+         default:
+            throw new TypeError('getSVG error: unknown elementType.');
+      }
+
+      return returnVal;
+   }
+
    function isConnected(a, b)
    {
       return a.index === b.index || linkedByIndex[a.index + ',' + b.index];
+   }
+
+   /**
+    * Returns whether there is a currently selected node (drag or context).
+    *
+    * @returns {boolean}
+    */
+   function isNodeSelected()
+   {
+      return typeof selectedDragNode !== 'undefined' || typeof selectedContextNode !== 'undefined';
    }
 
    function onControlDepsClicked()
@@ -331,6 +350,8 @@
 
       renderGraph();
 
+      updateTableUI();
+
       // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
       centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 4000);
    }
@@ -347,6 +368,8 @@
 
       renderGraph({ redrawOnly: true });
 
+      updateTableUI();
+
       // Center graph w/ zoom fit w/ 200 millisecond transition applied after half second delay for debounce.
       centerGraph(zoomFit, 200, data.allNodesFixed ? 0 : 500);
    }
@@ -356,6 +379,8 @@
       reverseGraphLinks();
 
       renderGraph({ redrawOnly: true });
+
+      updateTableUI();
    }
 
    function onControlMenuClicked()
@@ -376,6 +401,7 @@
 
          case 'showTableView':
             appOptions.showTableView = !appOptions.showTableView;
+            $('.control-table').toggleClass('hidden', !appOptions.showTableView);
             break;
 
          case 'maxDepthSticky':
@@ -384,9 +410,33 @@
       }
 
       updateMenuUI();
+   }
 
-      centerGraph(zoomFit());
-      renderGraph({ redrawOnly: true });
+   function onControlTableRowContextClick(node, e)
+   {
+      onNodeContextClick(node, { x: e.pageX, y: e.pageY });
+   }
+
+   function onControlTableRowMouseOver(nodes, links, node, enter)
+   {
+console.log('!! onControlTableRowMouseOver - node name: ' + node.packageData.name +'; enter: ' +enter);
+      if (typeof selectedContextNode !== 'undefined' && selectedContextNode !== node)
+      {
+         var contextMenuButton = $('#context-menu');
+         var popupmenu = $('#contextpopup .mdl-menu__container');
+
+         // Picked element is not the menu
+         if (!$(event.target).parents('#contextpopup').length > 0)
+         {
+            // Hide menu if currently visible
+            if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
+
+            fadeRelatedNodes(selectedContextNode, false, nodes, links);
+            selectedContextNode = undefined;
+         }
+      }
+
+      onNodeMouseOverOut(nodes, links, enter, node);
    }
 
    function onControlZoomClicked()
@@ -415,6 +465,12 @@
 
    function onNodeContextMenuClick()
    {
+      if (selectedContextNode)
+      {
+         fadeRelatedNodes(selectedContextNode, false, nodes, links);
+         selectedContextNode = undefined;
+      }
+
       switch ($(this).data('action'))
       {
          case 'openSCMLink':
@@ -428,21 +484,30 @@
       }
    }
 
-   function onNodeContextClick(d)
+   /**
+    * Shows the node context menu
+    *
+    * @param {object}   d - A node.
+
+    * @param {object}   coords - Object containing x / y position for context menu; if not provided Node position
+    *                            determines coords.
+    */
+   function onNodeContextClick(d, coords)
    {
-      d3.event.preventDefault();
+      // Only accessed if onNodeContextClick called from D3.
+      if (d3.event) { d3.event.preventDefault(); }
 
       var contextMenuButton = $("#context-menu");
 
       var popupmenu = $('#contextpopup .mdl-menu__container');
 
       // Hide menu if currently visible
-      if (popupmenu.hasClass('is-visible'))
-      {
-         contextMenuButton.click();
-      }
+      if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
 
-      var coords = getElementCoords(this, { x: this.getAttribute('cx'), y: this.getAttribute('cy') });
+      if (typeof coords !== 'object')
+      {
+         coords = getElementCoords(this, { x: this.getAttribute('cx'), y: this.getAttribute('cy') });
+      }
 
       popupmenu.find('li').each(function( index )
       {
@@ -463,6 +528,11 @@
          }
       });
 
+      if (selectedContextNode) { fadeRelatedNodes(selectedContextNode, false, nodes, links); }
+
+      selectedContextNode = d;
+      fadeRelatedNodes(selectedContextNode, true, nodes, links);
+
       // Wrapping in a 100ms timeout allows MDL to draw animation when showing a context menu after one has been hidden.
       setTimeout(function()
       {
@@ -476,24 +546,42 @@
       }, 100);
    }
 
-   function onNodeMouseOver(nodes, links, d)
+   function onNodeMouseDown(nodes, links, d)
    {
-      // Highlight circle
-      var elm = findElementByNode('circle', d);
-      elm.classed('selected', true);
+      if (typeof selectedContextNode !== 'undefined')
+      {
+         var contextMenuButton = $('#context-menu');
+         var popupmenu = $('#contextpopup .mdl-menu__container');
 
-      // Highlight related nodes
-      fadeRelatedNodes(d, .05, nodes, links);
+         // Hide menu if currently visible
+         if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
+
+         fadeRelatedNodes(selectedContextNode, false, nodes, links);
+         selectedContextNode = undefined;
+      }
+
+      if (d3.event.button === 0)
+      {
+         selectedDragNode = d;
+
+         // Select / highlight related nodes or remove attributes based on enter state.
+         fadeRelatedNodes(d, true, nodes, links);
+      }
+      else
+      {
+         d3.event.stopPropagation();
+      }
    }
 
-   function onNodeMouseOut(nodes, links, d)
+   function onNodeMouseOverOut(nodes, links, enter, d)
    {
-      // Highlight circle
-      var elm = findElementByNode('circle', d);
-      elm.classed('selected', false);
+console.log('!! onNodeMouseOverOut - enter: ' + enter + '; d.name: ' + d.packageData.name +'; isNodeSelected: ' + isNodeSelected() +'; selectedDragNode: ' + selectedDragNode +'; selectedContextNode: ' + selectedContextNode);
 
-      // Highlight related nodes
-      fadeRelatedNodes(d, 1, nodes, links);
+      // If there is an existing selected node then exit early.
+      if (isNodeSelected()) { return; }
+
+      // Select / highlight related nodes or remove attributes based on enter state.
+      fadeRelatedNodes(d, enter, nodes, links);
    }
 
    function onResize()
@@ -572,6 +660,9 @@
       options = typeof options === 'object' ? options : {};
       options.redrawOnly = typeof options.redrawOnly === 'boolean' ? options.redrawOnly : false;
 
+//TODO SN
+      selectedDragNode = undefined;
+
       // Recycle all SVG elements above the first SVGGElement.
       recycleGraph();
 
@@ -596,10 +687,11 @@
       nodes.append(getSVG('circle'))
        .attr('id', function(d) { return formatClassName('id', d); })
        .attr('class', function(d) { return formatClassName('circle', d) + ' ' + d.packageData.type; })
-       .attr('r', 6)
+       .attr('r', circleRadius)
        .on('contextmenu', onNodeContextClick)
-       .on('mouseover', onNodeMouseOver.bind(this, nodes, links))
-       .on('mouseout', onNodeMouseOut.bind(this, nodes, links))
+       .on('mousedown', onNodeMouseDown.bind(this, nodes, links))
+       .on('mouseover', onNodeMouseOverOut.bind(this, nodes, links, true))
+       .on('mouseout', onNodeMouseOverOut.bind(this, nodes, links, false))
        .on('dblclick.zoom', function(d) // Centers view on node.
        {
           d3.event.stopPropagation();
@@ -730,6 +822,39 @@
       });
    }
 
+   function updateTableUI()
+   {
+      var table = $('.control-table tbody');
+
+      table.off('mouseenter', 'tr', onControlTableRowMouseOver);
+      table.off('mouseleave', 'tr', onControlTableRowMouseOver);
+      table.off('contextmenu', 'tr', onControlTableRowContextClick);
+
+      table.empty();
+
+      if (data)
+      {
+         data.nodes.forEach(function(node)
+         {
+            var pd = node.packageData;
+
+            var tr = $(
+             '<tr>' +
+                '<td class="mdl-data-table__cell--non-numeric">' + pd.name + '</td>' +
+                '<td class="mdl-data-table__cell--non-numeric">' + pd.type + '</td>' +
+                '<td class="mdl-data-table__cell--non-numeric">' + pd.version + '</td>' +
+                '<td class="mdl-data-table__cell--non-numeric">' + node.minLevel + '</td>' +
+             '</tr>');
+
+            table.append(tr);
+
+            tr.on('mouseenter', onControlTableRowMouseOver.bind(this, nodes, links, node, true));
+            tr.on('mouseleave', onControlTableRowMouseOver.bind(this, nodes, links, node, false));
+            tr.on('contextmenu', onControlTableRowContextClick.bind(this, node));
+         });
+      }
+   }
+
    function zoomFit()
    {
       var bounds = graph.node().getBBox();
@@ -746,19 +871,92 @@
       return scale;
    }
 
+   /**
+    * This function removes the selected node highlighting if a node is currently selected and the distance between
+    * the document mouse up value is greater than the radius of the current location of the circle SVG element.
+    */
+   $(document).bind('mousedown', function(event)
+   {
+      if (typeof selectedContextNode !== 'undefined')
+      {
+         var contextMenuButton = $('#context-menu');
+         var popupmenu = $('#contextpopup .mdl-menu__container');
+
+         // Picked element is not the menu
+         if (!$(event.target).parents('#contextpopup').length > 0)
+         {
+            // Hide menu if currently visible
+            if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
+
+            fadeRelatedNodes(selectedContextNode, false, nodes, links);
+            selectedContextNode = undefined;
+         }
+      }
+   });
+
+   /**
+    * This function removes the selected node highlighting if a node is currently selected and the distance between
+    * the document mouse up value is greater than the radius of the current location of the circle SVG element.
+    */
+   $(document).bind('mouseup', function(event)
+   {
+      if (typeof selectedDragNode !== 'undefined')
+      {
+         var pageX = event.pageX;
+         var pageY = event.pageY;
+
+         // Detect a drag / mouse up outside window bounds and automatically reset.
+         if (pageX < 0 || pageY < 0 || pageX > window.innerWidth || pageY > window.innerHeight)
+         {
+            fadeRelatedNodes(selectedDragNode, false, nodes, links);
+            selectedDragNode = undefined;
+            return;
+         }
+
+         // Otherwise verify if the mouse up distance is greater than the SVGCircleElement location.
+
+         var elm = findElementByNode('circle', selectedDragNode);
+
+         var elmAttr = elm["0"]["0"];
+
+         var coords = getElementCoords(elmAttr, { x: elmAttr.getAttribute('cx'), y: elmAttr.getAttribute('cy') });
+
+         var a = pageX - coords.x;
+         var b = pageY - coords.y;
+
+         var distance = Math.sqrt(a * a + b * b);
+
+console.log('!!!! document mouse up - page x: ' + pageX +'; page y: ' + pageY +'; elm coords x: ' + coords.x +'; y: ' + coords.y +'; distance: ' + distance);
+
+         // Remove highlight circle and related nodes
+         if (distance > circleRadius) { fadeRelatedNodes(selectedDragNode, false, nodes, links); }
+
+         selectedDragNode = undefined;
+      }
+   });
+
    // Properly handle closing context menu when document context clicked
-   $(document).bind("contextmenu", function(event)
+   $(document).bind('contextmenu', function(event)
    {
       event.preventDefault();
 
-      var contextMenuButton = $("#context-menu");
+      var contextMenuButton = $('#context-menu');
       var popupmenu = $('#contextpopup .mdl-menu__container');
 
       // Picked element is not the menu
-      if (!$(event.target).parents("#contextpopup").length > 0)
+      if (!$(event.target).parents('#contextpopup').length > 0)
       {
          // Hide menu if currently visible
-         if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
+         if (popupmenu.hasClass('is-visible'))
+         {
+            contextMenuButton.click();
+
+            if (selectedContextNode)
+            {
+               fadeRelatedNodes(selectedContextNode, false, nodes, links);
+               selectedContextNode = undefined;
+            }
+         }
       }
    });
 
