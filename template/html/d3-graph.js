@@ -59,6 +59,8 @@
       $('.control-links input').on('click', onControlLinksClicked);
       $('.control-menu li').on('click', onControlMenuClicked);
 
+      $('#contextpopup li').on('click', onNodeContextMenuClick);
+
       appOptions.currentLevel = parseInt($('.control-level input').val());
       appOptions.currentScope = $('.control-deps input:radio[name=dep]:checked').val();
 
@@ -411,21 +413,67 @@
       centerGraph(newScale);
    }
 
-   function onNodeClick()
+   function onNodeContextMenuClick()
+   {
+      switch ($(this).data('action'))
+      {
+         case 'openSCMLink':
+            var link = $(this).data('extra');
+
+            if (typeof link === 'string')
+            {
+               window.open(link, '_blank', 'location=yes,menubar=yes,scrollbars=yes,status=yes');
+            }
+            break;
+      }
+   }
+
+   function onNodeContextClick(d)
    {
       d3.event.preventDefault();
-      //
-      //var coords = { x: this.getAttribute('cx'), y: this.getAttribute('cy') };
-      //
-      //coords = getElementCoords(this, coords);
-      //
-      //var popupmenu = $('#custompopup .mdl-menu__container');
-      //
-      //setTimeout(function()
-      //{
-      //   popupmenu.parent().css({ position: 'relative' });
-      //   popupmenu.css({ left: coords.x, top: coords.y, position:'absolute' });
-      //}, 0);
+
+      var contextMenuButton = $("#context-menu");
+
+      var popupmenu = $('#contextpopup .mdl-menu__container');
+
+      // Hide menu if currently visible
+      if (popupmenu.hasClass('is-visible'))
+      {
+         contextMenuButton.click();
+      }
+
+      var coords = getElementCoords(this, { x: this.getAttribute('cx'), y: this.getAttribute('cy') });
+
+      popupmenu.find('li').each(function( index )
+      {
+         switch (index)
+         {
+            case 0:
+               $(this).text('Open on ' + d.packageData.type);
+               $(this).data('extra', d.packageData.link);
+               break;
+
+            case 1:
+               $(this).text('Fullname: ' + d.packageData.fullName);
+               break;
+
+            case 2:
+               $(this).text('Version: ' + d.packageData.version);
+               break;
+         }
+      });
+
+      // Wrapping in a 100ms timeout allows MDL to draw animation when showing a context menu after one has been hidden.
+      setTimeout(function()
+      {
+         contextMenuButton.click();
+
+         setTimeout(function()
+         {
+            popupmenu.parent().css({ position: 'relative' });
+            popupmenu.css({ left: coords.x, top: coords.y, position:'absolute' });
+         }, 0);
+      }, 100);
    }
 
    function onNodeMouseOver(nodes, links, d)
@@ -547,9 +595,9 @@
       nodes.attr('class', function(d) { return formatClassName('node', d); });
       nodes.append(getSVG('circle'))
        .attr('id', function(d) { return formatClassName('id', d); })
-       .attr('class', function(d) { return formatClassName('circle', d) + ' ' + d.packageType; })
+       .attr('class', function(d) { return formatClassName('circle', d) + ' ' + d.packageData.type; })
        .attr('r', 6)
-       //       .on('click', onNodeClick)
+       .on('contextmenu', onNodeContextClick)
        .on('mouseover', onNodeMouseOver.bind(this, nodes, links))
        .on('mouseout', onNodeMouseOut.bind(this, nodes, links))
        .on('dblclick.zoom', function(d) // Centers view on node.
@@ -570,14 +618,14 @@
       nodes.append(getSVG('text'))
        .attr('x', 15)
        .attr('y', '.31em')
-       .attr('class', function(d) { return 'shadow ' + formatClassName('text', d) })
-       .text(function(d) { return d.name + ' (' + d.minLevel +')'; });
+       .attr('class', function(d) { return 'shadow ' + formatClassName('text', d); })
+       .text(function(d) { return d.packageData.name + ' (' + d.minLevel +')'; });
 
       nodes.append(getSVG('text'))
-       .attr('class', function(d) { return formatClassName('text', d) })
+       .attr('class', function(d) { return d.packageData.isAliased ? 'isAliased ' : '' + formatClassName('text', d); })
        .attr('x', 15)
        .attr('y', '.31em')
-       .text(function(d) { return d.name + ' (' + d.minLevel +')'; });
+       .text(function(d) { return d.packageData.name + ' (' + d.minLevel +')'; });
 
       // Set the force layout nodes / links and start the bounce.
       layout.nodes(data.nodes);
@@ -697,6 +745,22 @@
 
       return scale;
    }
+
+   // Properly handle closing context menu when document context clicked
+   $(document).bind("contextmenu", function(event)
+   {
+      event.preventDefault();
+
+      var contextMenuButton = $("#context-menu");
+      var popupmenu = $('#contextpopup .mdl-menu__container');
+
+      // Picked element is not the menu
+      if (!$(event.target).parents("#contextpopup").length > 0)
+      {
+         // Hide menu if currently visible
+         if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
+      }
+   });
 
    bootstrap();
 })();

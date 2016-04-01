@@ -128,11 +128,9 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
       const value = topLevelPackages[key];
       const objectID = s_SANITIZE_CSS(value);
 
-      let packageType;
+      const packageData = s_PARSE_PACKAGE(value, key);
 
-      if (value.startsWith('npm:')) { packageType = 'npm'; }
-      else if (value.startsWith('github:')) { packageType = 'github'; }
-      else { continue; }
+      if (packageData.type !== 'npm' && packageData.type !== 'github') { continue; }
 
       if (typeof jspmPackageMap[key] === 'undefined' && typeof jspmDevPackageMap[key] === 'undefined')
       {
@@ -140,7 +138,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
       }
 
       let index = packageNodesAll.length;
-      let object = { id: objectID, name: key, fullName: value, minLevel: 0, packageScope: 'all', packageType, index };
+      let object = { id: objectID, minLevel: 0, packageScope: 'all', packageData, index };
 
       if (!packageNodeMapAll.has(objectID))
       {
@@ -157,7 +155,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
       if (typeof jspmPackageMap[key] !== 'undefined')
       {
          index = packageNodesMain.length;
-         object = { id: objectID, name: key, fullName: value, minLevel: 0, packageScope: 'main', packageType, index };
+         object = { id: objectID, minLevel: 0, packageScope: 'main', packageData, index };
 
          if (!packageNodeMapMain.has(objectID))
          {
@@ -174,7 +172,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
       if (typeof jspmDevPackageMap[key] !== 'undefined')
       {
          index = packageNodesDev.length;
-         object = { id: objectID, name: key, fullName: value, minLevel: 0, packageScope: 'dev', packageType, index };
+         object = { id: objectID, minLevel: 0, packageScope: 'dev', packageData, index };
 
          if (!packageNodeMapDev.has(objectID))
          {
@@ -299,7 +297,7 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
           + `${packageDep.index}; dep: ${JSON.stringify(packageDep)}`);
       }
 
-      const childDepMap = childPackageMap[packageDep.fullName];
+      const childDepMap = childPackageMap[packageDep.packageData.package];
 
       if (typeof childDepMap === 'undefined')
       {
@@ -309,18 +307,17 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
       // Parse top level packages
       for (const key in childDepMap)
       {
-         let packageType;
          const value = childDepMap[key];
 
-         if (value.startsWith('npm:')) { packageType = 'npm'; }
-         else if (value.startsWith('github:')) { packageType = 'github'; }
-         else { continue; }
+         const packageData = s_PARSE_PACKAGE(value);
+
+         if (packageData.type !== 'npm' && packageData.type !== 'github') { continue; }
 
          const index = packageNodes.length;
          const objectID = s_SANITIZE_CSS(value);
 
-         const newNode =
-         { id: objectID, name: key, fullName: value, minLevel: depth, packageScope, packageType, index };
+
+         const newNode = { id: objectID, minLevel: depth, packageScope, packageData, index };
 
          if (!packageNodeMap.has(objectID))
          {
@@ -384,6 +381,49 @@ const s_FILTER_PACKAGE_MAP = (packageMap, output = {}) =>
    }
 
    return output;
+};
+
+const s_PARSE_PACKAGE = (value, key) =>
+{
+   let values = value.split(/(.*):(.*)@(.*)/);
+
+   const result =
+   {
+      type: values[1],
+      name: values[2],
+      fullName: values[2],
+      version: values[3],
+      package: value,
+      isAliased: false
+   };
+
+   switch (result.type)
+   {
+      case 'github':
+         result.link = `https://github.com/${result.name}`;
+
+         values = result.name.split(/(.*)\/(.*)/);
+
+         result.owner = values[1];
+         result.name = values[2];
+         result.fullName = values[2];
+         break;
+
+      case 'npm':
+         result.link = `https://www.npmjs.com/package/${result.name}`;
+         break;
+
+      default:
+         throw new Error(`s_PARSE_PACKAGE error, unknown package: ${value}`);
+   }
+
+   if (typeof key === 'string' && result.name !== key)
+   {
+      result.name = key;
+      result.isAliased = true;
+   }
+
+   return result;
 };
 
 /**

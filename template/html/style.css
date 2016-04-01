@@ -2,7 +2,7 @@ body {
    background: #fff;
    padding:0;
    margin:0;
-   font-family:helvetica,arial;
+   font-family: 'Roboto', sans-serif;
    overflow: hidden;
 }
 
@@ -62,6 +62,10 @@ text.shadow {
    stroke-opacity: .8;
 }
 
+text.isAliased {
+   fill: #ff0000;
+}
+
 path.link {
    fill: none;
    stroke: #666;
@@ -110,8 +114,30 @@ path.link.resolved {
    z-index: 10;
 }
 
+.control-table {
+   position: relative;
+   clear: both;
+   float: left;
+   background: rgba(240, 240, 240, 0.9);
+   padding: 8px;
+   margin-top: 5px;
+   margin-left: 10px;
+   border-radius: 7px;
+   z-index: 10;
+}
+
 .flex-center-left {
    display: flex;
    align-items: center;
    justify-content: left;
+}
+
+.mdl-menu {
+   padding: 0;
+}
+
+.mdl-menu__item {
+   height: 32px;
+   line-height: 32px;
+   padding: 0 8px;
 }
