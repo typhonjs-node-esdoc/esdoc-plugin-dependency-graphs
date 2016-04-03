@@ -440,6 +440,7 @@
          case 'showTableView':
             appOptions.showTableView = !appOptions.showTableView;
             $('.control-table').toggleClass('hidden', !appOptions.showTableView);
+            updateTableUIExtent();
             break;
 
          case 'maxDepthSticky':
@@ -604,6 +605,8 @@
       if (appOptions.unfreezeOnResize) { setNodesFixed(false); }
 
       updateMenuUI();
+
+      updateTableUIExtent();
 
       centerGraph(zoomFit());
    }
@@ -902,7 +905,22 @@
          $('#nodeTable th').removeClass('headerSortDown');
          $('#nodeTable th').removeClass('headerSortUp');
          $('#nodeTable').trigger('update');
+
+         updateTableUIExtent();
       }
+   }
+
+   /**
+    * Updates the node table max-height enabling scrolling as necessary.
+    */
+   function updateTableUIExtent()
+   {
+      var tableDiv = $('.control-table-inner');
+
+      var offset = tableDiv.offset();
+      var tableHeight = window.innerHeight - offset.top - 20;
+
+      tableDiv.css('max-height', tableHeight);
    }
 
    function zoomFit()
