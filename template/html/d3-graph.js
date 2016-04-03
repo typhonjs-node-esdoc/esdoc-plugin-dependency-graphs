@@ -37,6 +37,18 @@
       text: []
    };
 
+   function cerialize(text)
+   {
+      var svgxml = (new XMLSerializer()).serializeToString(d3.select('svg').node());
+      console.log('!!! serialize data -- text: ' + text);
+      console.log('!!! svg: ' + svgxml);
+      if (data)
+      {
+         console.log('!!! data.links: ' + JSON.stringify(data.links));
+         console.log('!!! data.nodes: ' + JSON.stringify(data.nodes));
+      }
+   }
+
    function bootstrap()
    {
       // Controllers
@@ -222,13 +234,13 @@
          }
          else
          {
-            var elmAllLinks = $('path.link:not([data-show])');
-
-            elmAllLinks.attr('marker-end', opacity === 1 ? 'url(#regular)' : '');
-
             return opacity;
          }
       });
+
+      // Modify all links that have not had 'data-show' added above.
+      var elmAllLinks = $('path.link:not([data-show])');
+      elmAllLinks.attr('marker-end', opacity === 1 ? 'url(#regular)' : '');
    }
 
    function findElementByNode(prefix, node)
@@ -433,7 +445,7 @@
 
    function onControlTableRowContextClick(node, event)
    {
-      event.preventDefault();
+      event.preventDefault(); // Prevents default browser context menu from showing.
       onNodeContextClick(node, { x: event.pageX, y: event.pageY });
    }
 
@@ -653,12 +665,13 @@
       recycleGraph();
 
       // Lines
+      // Note: on second render o.source / target will be an object instead of a number.
       links = graph.append(getSVG('g')).selectAll('line')
        .data(data.links)
        .enter().append(getSVG('path'))
        .attr('class', 'link')
-       .attr('data-target', function(o) { return o.target; })
-       .attr('data-source', function(o) { return o.source; })
+       .attr('data-target', function(o) { return typeof o.target === 'number' ? o.target : o.target.index; })
+       .attr('data-source', function(o) { return typeof o.source === 'number' ? o.source : o.source.index; })
        .attr('marker-end', function() { return 'url(#regular)'; });
 
       // Nodes
