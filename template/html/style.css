@@ -137,6 +137,10 @@ path.link.resolved {
    justify-content: left;
 }
 
+.material-icon-blue {
+   color: #3f51b5;
+}
+
 .mdl-menu {
    padding: 0;
 }
@@ -145,6 +149,11 @@ path.link.resolved {
    height: 32px;
    line-height: 32px;
    padding: 0 8px;
+}
+
+li.mdl-menu__item:hover
+{
+   background-color: #87cefa;
 }
 
 .mdl-data-table {
