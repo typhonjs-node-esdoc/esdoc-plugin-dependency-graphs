@@ -212,7 +212,7 @@
       {
          if (o.source === d)
          {
-            // Highlight target/sources of the link
+            // Highlight target / sources of the link
             var elmNodes = graph.selectAll('.' + formatClassName('node', o.target));
             elmNodes.attr('fill-opacity', 1);
             elmNodes.attr('stroke-opacity', 1);
@@ -304,6 +304,45 @@
       }
 
       return returnVal;
+   }
+
+   /**
+    * Hides the node context menu if visible and removes any node highlighting. If an event is supplied it is checked
+    * against any existing context menu and is ignored if the context menu is within the parent hierarchy.
+    *
+    * @param {object|undefined}  event - Optional event
+    */
+   function hideNodeContextMenu(event)
+   {
+      // Provide an early out if there is no selected context node.
+      if (typeof selectedContextNode === 'undefined') { return; }
+
+      var contextMenuButton = $('#context-menu');
+      var popupmenu = $('#contextpopup .mdl-menu__container');
+
+      // If an event is defined then make sure it isn't targeting the context menu.
+      if (event)
+      {
+         event.preventDefault();
+
+         // Picked element is not the menu
+         if (!$(event.target).parents('#contextpopup').length > 0)
+         {
+            // Hide menu if currently visible
+            if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
+
+            fadeRelatedNodes(selectedContextNode, false, nodes, links);
+            selectedContextNode = undefined;
+         }
+      }
+      else // No event defined so always close context menu and remove node highlighting.
+      {
+         // Hide menu if currently visible
+         if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
+
+         fadeRelatedNodes(selectedContextNode, false, nodes, links);
+         selectedContextNode = undefined;
+      }
    }
 
    function isConnected(a, b)
@@ -412,29 +451,16 @@
       updateMenuUI();
    }
 
-   function onControlTableRowContextClick(node, e)
+   function onControlTableRowContextClick(node, event)
    {
-      onNodeContextClick(node, { x: e.pageX, y: e.pageY });
+      event.preventDefault();
+      onNodeContextClick(node, { x: event.pageX, y: event.pageY });
    }
 
    function onControlTableRowMouseOver(nodes, links, node, enter)
    {
-console.log('!! onControlTableRowMouseOver - node name: ' + node.packageData.name +'; enter: ' +enter);
-      if (typeof selectedContextNode !== 'undefined' && selectedContextNode !== node)
-      {
-         var contextMenuButton = $('#context-menu');
-         var popupmenu = $('#contextpopup .mdl-menu__container');
-
-         // Picked element is not the menu
-         if (!$(event.target).parents('#contextpopup').length > 0)
-         {
-            // Hide menu if currently visible
-            if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
-
-            fadeRelatedNodes(selectedContextNode, false, nodes, links);
-            selectedContextNode = undefined;
-         }
-      }
+      // Hide the node context menu if currently showing when a new table row / node is moused over.
+      if (node !== selectedContextNode) { hideNodeContextMenu(event); }
 
       onNodeMouseOverOut(nodes, links, enter, node);
    }
@@ -465,11 +491,8 @@ console.log('!! onControlTableRowMouseOver - node name: ' + node.packageData.nam
 
    function onNodeContextMenuClick()
    {
-      if (selectedContextNode)
-      {
-         fadeRelatedNodes(selectedContextNode, false, nodes, links);
-         selectedContextNode = undefined;
-      }
+      // When a context menu is selected remove node highlighting.
+      hideNodeContextMenu();
 
       switch ($(this).data('action'))
       {
@@ -494,20 +517,15 @@ console.log('!! onControlTableRowMouseOver - node name: ' + node.packageData.nam
     */
    function onNodeContextClick(d, coords)
    {
-      // Only accessed if onNodeContextClick called from D3.
-      if (d3.event) { d3.event.preventDefault(); }
-
-      var contextMenuButton = $("#context-menu");
-
-      var popupmenu = $('#contextpopup .mdl-menu__container');
-
-      // Hide menu if currently visible
-      if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
+      // Hides any existing node context menu.
+      hideNodeContextMenu();
 
       if (typeof coords !== 'object')
       {
          coords = getElementCoords(this, { x: this.getAttribute('cx'), y: this.getAttribute('cy') });
       }
+
+      var popupmenu = $('#contextpopup .mdl-menu__container');
 
       popupmenu.find('li').each(function( index )
       {
@@ -528,14 +546,14 @@ console.log('!! onControlTableRowMouseOver - node name: ' + node.packageData.nam
          }
       });
 
-      if (selectedContextNode) { fadeRelatedNodes(selectedContextNode, false, nodes, links); }
-
-      selectedContextNode = d;
-      fadeRelatedNodes(selectedContextNode, true, nodes, links);
-
       // Wrapping in a 100ms timeout allows MDL to draw animation when showing a context menu after one has been hidden.
       setTimeout(function()
       {
+         // Assign new selected context node and highlight related nodes.
+         selectedContextNode = d;
+         fadeRelatedNodes(selectedContextNode, true, nodes, links);
+
+         var contextMenuButton = $("#context-menu");
          contextMenuButton.click();
 
          setTimeout(function()
@@ -548,18 +566,9 @@ console.log('!! onControlTableRowMouseOver - node name: ' + node.packageData.nam
 
    function onNodeMouseDown(nodes, links, d)
    {
-      if (typeof selectedContextNode !== 'undefined')
-      {
-         var contextMenuButton = $('#context-menu');
-         var popupmenu = $('#contextpopup .mdl-menu__container');
+      hideNodeContextMenu();
 
-         // Hide menu if currently visible
-         if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
-
-         fadeRelatedNodes(selectedContextNode, false, nodes, links);
-         selectedContextNode = undefined;
-      }
-
+      // Only select / drag nodes with left clicked otherwise stop propagation of event.
       if (d3.event.button === 0)
       {
          selectedDragNode = d;
@@ -575,8 +584,6 @@ console.log('!! onControlTableRowMouseOver - node name: ' + node.packageData.nam
 
    function onNodeMouseOverOut(nodes, links, enter, d)
    {
-console.log('!! onNodeMouseOverOut - enter: ' + enter + '; d.name: ' + d.packageData.name +'; isNodeSelected: ' + isNodeSelected() +'; selectedDragNode: ' + selectedDragNode +'; selectedContextNode: ' + selectedContextNode);
-
       // If there is an existing selected node then exit early.
       if (isNodeSelected()) { return; }
 
@@ -660,8 +667,8 @@ console.log('!! onNodeMouseOverOut - enter: ' + enter + '; d.name: ' + d.package
       options = typeof options === 'object' ? options : {};
       options.redrawOnly = typeof options.redrawOnly === 'boolean' ? options.redrawOnly : false;
 
-//TODO SN
-      selectedDragNode = undefined;
+////TODO SN
+//      selectedDragNode = undefined;
 
       // Recycle all SVG elements above the first SVGGElement.
       recycleGraph();
@@ -871,32 +878,17 @@ console.log('!! onNodeMouseOverOut - enter: ' + enter + '; d.name: ' + d.package
       return scale;
    }
 
-   /**
-    * This function removes the selected node highlighting if a node is currently selected and the distance between
-    * the document mouse up value is greater than the radius of the current location of the circle SVG element.
-    */
-   $(document).bind('mousedown', function(event)
-   {
-      if (typeof selectedContextNode !== 'undefined')
-      {
-         var contextMenuButton = $('#context-menu');
-         var popupmenu = $('#contextpopup .mdl-menu__container');
+   // Prevent default browser context menu from being triggered.
+   $(document).bind('contextmenu', function(event) { event.preventDefault(); });
 
-         // Picked element is not the menu
-         if (!$(event.target).parents('#contextpopup').length > 0)
-         {
-            // Hide menu if currently visible
-            if (popupmenu.hasClass('is-visible')) { contextMenuButton.click(); }
-
-            fadeRelatedNodes(selectedContextNode, false, nodes, links);
-            selectedContextNode = undefined;
-         }
-      }
-   });
+   // Properly handle closing context menu when document mouse down clicked
+   // This works when a node context click occurs because the new context menu is shown with a small timeout.
+   $(document).bind('mousedown', hideNodeContextMenu);
 
    /**
-    * This function removes the selected node highlighting if a node is currently selected and the distance between
-    * the document mouse up value is greater than the radius of the current location of the circle SVG element.
+    * This function removes the selected drag node highlighting if document mouse up event occurs outside the window
+    * bounds the distance between the document mouse up value is greater than the radius of the current location
+    * of the circle SVG element.
     */
    $(document).bind('mouseup', function(event)
    {
@@ -926,37 +918,10 @@ console.log('!! onNodeMouseOverOut - enter: ' + enter + '; d.name: ' + d.package
 
          var distance = Math.sqrt(a * a + b * b);
 
-console.log('!!!! document mouse up - page x: ' + pageX +'; page y: ' + pageY +'; elm coords x: ' + coords.x +'; y: ' + coords.y +'; distance: ' + distance);
-
-         // Remove highlight circle and related nodes
+         // Remove node highlight and related nodes
          if (distance > circleRadius) { fadeRelatedNodes(selectedDragNode, false, nodes, links); }
 
          selectedDragNode = undefined;
-      }
-   });
-
-   // Properly handle closing context menu when document context clicked
-   $(document).bind('contextmenu', function(event)
-   {
-      event.preventDefault();
-
-      var contextMenuButton = $('#context-menu');
-      var popupmenu = $('#contextpopup .mdl-menu__container');
-
-      // Picked element is not the menu
-      if (!$(event.target).parents('#contextpopup').length > 0)
-      {
-         // Hide menu if currently visible
-         if (popupmenu.hasClass('is-visible'))
-         {
-            contextMenuButton.click();
-
-            if (selectedContextNode)
-            {
-               fadeRelatedNodes(selectedContextNode, false, nodes, links);
-               selectedContextNode = undefined;
-            }
-         }
       }
    });
 
