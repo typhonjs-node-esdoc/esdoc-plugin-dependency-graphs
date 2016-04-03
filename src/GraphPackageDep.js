@@ -138,7 +138,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
       }
 
       let index = packageNodesAll.length;
-      let object = { id: objectID, minLevel: 0, packageScope: 'all', packageData, index };
+      let object = { id: objectID, minLevel: 0, packageScope: 'all', packageData, fixed: false, index };
 
       if (!packageNodeMapAll.has(objectID))
       {
@@ -155,7 +155,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
       if (typeof jspmPackageMap[key] !== 'undefined')
       {
          index = packageNodesMain.length;
-         object = { id: objectID, minLevel: 0, packageScope: 'main', packageData, index };
+         object = { id: objectID, minLevel: 0, packageScope: 'main', packageData, fixed: false, index };
 
          if (!packageNodeMapMain.has(objectID))
          {
@@ -172,7 +172,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
       if (typeof jspmDevPackageMap[key] !== 'undefined')
       {
          index = packageNodesDev.length;
-         object = { id: objectID, minLevel: 0, packageScope: 'dev', packageData, index };
+         object = { id: objectID, minLevel: 0, packageScope: 'dev', packageData, fixed: false, index };
 
          if (!packageNodeMapDev.has(objectID))
          {
@@ -317,7 +317,7 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
          const objectID = s_SANITIZE_CSS(value);
 
 
-         const newNode = { id: objectID, minLevel: depth, packageScope, packageData, index };
+         const newNode = { id: objectID, minLevel: depth, packageScope, packageData, fixed: false, index };
 
          if (!packageNodeMap.has(objectID))
          {

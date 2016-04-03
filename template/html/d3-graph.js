@@ -37,22 +37,8 @@
       text: []
    };
 
-   function cerialize(text)
-   {
-      var svgxml = (new XMLSerializer()).serializeToString(d3.select('svg').node());
-      console.log('!!! serialize data -- text: ' + text);
-      console.log('!!! svg: ' + svgxml);
-      if (data)
-      {
-         console.log('!!! data.links: ' + JSON.stringify(data.links));
-         console.log('!!! data.nodes: ' + JSON.stringify(data.nodes));
-      }
-   }
-
    function bootstrap()
    {
-      updateMenuUI();
-
       // Controllers
       $('.control-zoom button').on('click', onControlZoomClicked);
       $('.control-level input').on('change', onControlLevelChanged);
@@ -87,6 +73,7 @@
        {
           d3.event.sourceEvent.stopPropagation();
           d3.select(this).classed('dragging', true).classed('fixed', d.fixed = true);
+          detectAllNodesFixed();
        })
        .on('drag', function(d)
        {
@@ -127,12 +114,7 @@
        .attr('height', graphHeight)
        .attr('transform', 'translate(' + zoom.translate() + ')' + ' scale(' + zoom.scale() + ')');
 
-      // Load graph data
-      updateGraphData();
-
-      renderGraph();
-
-      updateTableUI();
+      updateAll();
 
       // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
       centerGraph(zoomFit, 1000, 4000);
@@ -181,6 +163,18 @@
           .duration(duration)
           .attr('transform', 'translate(' + zoom.translate() + ')' + ' scale(' + zoom.scale() + ')');
       }, delay);
+   }
+
+   function detectAllNodesFixed()
+   {
+      if (data)
+      {
+         var currentNodesFixed = data.allNodesFixed;
+         var allNodesFixed = true;
+         data.nodes.forEach(function(node) { if (!node.fixed) { allNodesFixed = false; } });
+         data.allNodesFixed = allNodesFixed;
+         if (currentNodesFixed !== allNodesFixed) { updateMenuUI(); } // Update freeze / unfreeze menu option.
+      }
    }
 
    function fadeRelatedNodes(d, selected, nodes, links)
@@ -385,11 +379,7 @@
       $('.control-level label').html(appOptions.currentLevel);
 
       // Load graph data
-      updateGraphData();
-
-      renderGraph();
-
-      updateTableUI();
+      updateAll({ redrawOnly: true });
 
       // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
       centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 4000);
@@ -402,12 +392,7 @@
       $('.control-level input').val(appOptions.currentLevel);
       $('.control-level label').html(appOptions.currentLevel);
 
-      // Load graph data
-      updateGraphData();
-
-      renderGraph({ redrawOnly: true });
-
-      updateTableUI();
+      updateAll({ redrawOnly: true });
 
       // Center graph w/ zoom fit w/ 200 millisecond transition applied after half second delay for debounce.
       centerGraph(zoomFit, 200, data.allNodesFixed ? 0 : 500);
@@ -418,20 +403,14 @@
       reverseGraphLinks();
 
       renderGraph({ redrawOnly: true });
-
-      updateTableUI();
    }
 
    function onControlMenuClicked()
    {
       switch ($(this).data('action'))
       {
-         case 'freezeAllNodes':
-            setNodesFixed(true);
-            break;
-
-         case 'unfreezeAllNodes':
-            setNodesFixed(false);
+         case 'toggleFreezeAllNodes':
+            setNodesFixed(!data.allNodesFixed);
             break;
 
          case 'unfreezeOnResize':
@@ -448,7 +427,8 @@
             break;
       }
 
-      updateMenuUI();
+      // Defer updating menu UI until menu is hidden.
+      setTimeout(updateMenuUI, 200);
    }
 
    function onControlTableRowContextClick(node, event)
@@ -603,6 +583,8 @@
       // Potentially resets any fixed node state.
       if (appOptions.unfreezeOnResize) { setNodesFixed(false); }
 
+      updateMenuUI();
+
       centerGraph(zoomFit());
    }
 
@@ -666,9 +648,6 @@
    {
       options = typeof options === 'object' ? options : {};
       options.redrawOnly = typeof options.redrawOnly === 'boolean' ? options.redrawOnly : false;
-
-////TODO SN
-//      selectedDragNode = undefined;
 
       // Recycle all SVG elements above the first SVGGElement.
       recycleGraph();
@@ -769,6 +748,23 @@
       if (data) { data.allNodesFixed = fixed; }
    }
 
+   /**
+    * Helper function that simply defers to the standard update / render process.
+    *
+    * @param renderOptions
+    */
+   function updateAll(renderOptions)
+   {
+      // Load graph data
+      updateGraphData();
+
+      renderGraph(renderOptions);
+
+      updateMenuUI();
+
+      updateTableUI();
+   }
+
    function updateGraphData()
    {
       // Copy existing data / node parameters to new filtered data;
@@ -780,7 +776,14 @@
          data.nodes.forEach(function(node)
          {
             existingNodeSimMap[node.id] =
-            { weight: node.weight, x: node.x, y: node.y, px: node.px, py: node.py, fixed: node.fixed ? node.fixed : 0 };
+            {
+               weight: node.weight,
+               x: node.x,
+               y: node.y,
+               px: node.px,
+               py: node.py,
+               fixed: node.fixed ? node.fixed : false
+            };
          });
 
          // Copy existing sim data to any package scope that contains the same node ID.
@@ -822,6 +825,12 @@
 
    function updateMenuUI()
    {
+      if (data)
+      {
+         $('.control-menu li[data-action=toggleFreezeAllNodes]').html(data.allNodesFixed ?
+          'Unfreeze nodes' : 'Freeze nodes');
+      }
+
       appMenuToggleOptions.forEach(function(key)
       {
          var icon = appOptions[key] ? 'check_box' : 'check_box_outline_blank';
