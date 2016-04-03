@@ -16,11 +16,12 @@
       currentLevel: 0,
       currentScope: 'all', // Stores package / source scope: main, dev, all
       maxDepthSticky: true,
+      showFullNames: false,
       showTableView: false,
       unfreezeOnResize: true
    };
 
-   var appMenuToggleOptions = ['maxDepthSticky', 'showTableView', 'unfreezeOnResize'];
+   var appMenuToggleOptions = ['maxDepthSticky', 'showFullNames', 'showTableView', 'unfreezeOnResize'];
 
    var dataPackageMap =
    {
@@ -394,7 +395,7 @@
       updateAll({ redrawOnly: true });
 
       // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
-      centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 4000);
+      centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 2000);
    }
 
    function onControlLevelChanged()
@@ -427,6 +428,11 @@
 
          case 'unfreezeOnResize':
             appOptions.unfreezeOnResize = !appOptions.unfreezeOnResize;
+            break;
+
+         case 'showFullNames':
+            appOptions.showFullNames = !appOptions.showFullNames;
+            updateAll({ redrawOnly: true });
             break;
 
          case 'showTableView':
@@ -710,13 +716,19 @@
        .attr('x', 15)
        .attr('y', '.31em')
        .attr('class', function(d) { return 'shadow ' + formatClassName('text', d); })
-       .text(function(d) { return d.packageData.name + ' (' + d.minLevel +')'; });
+       .text(function(d)
+       {
+          return (appOptions.showFullNames ? d.packageData.fullName : d.packageData.name) + ' (' + d.minLevel +')';
+       });
 
       nodes.append(getSVG('text'))
        .attr('class', function(d) { return d.packageData.isAliased ? 'isAliased ' : '' + formatClassName('text', d); })
        .attr('x', 15)
        .attr('y', '.31em')
-       .text(function(d) { return d.packageData.name + ' (' + d.minLevel +')'; });
+       .text(function(d)
+       {
+          return (appOptions.showFullNames ? d.packageData.fullName : d.packageData.name) + ' (' + d.minLevel +')';
+       });
 
       // Set the force layout nodes / links and start the bounce.
       layout.nodes(data.nodes);
@@ -866,10 +878,12 @@
          data.nodes.forEach(function(node)
          {
             var pd = node.packageData;
+            var name = appOptions.showFullNames ? pd.fullName : pd.name;
+            var isAliased = pd.isAliased ? ' isAliased' : '';
 
             var tr = $(
              '<tr>' +
-                '<td class="mdl-data-table__cell--non-numeric">' + pd.name + '</td>' +
+                '<td class="mdl-data-table__cell--non-numeric' + isAliased + '">' + name + '</td>' +
                 '<td class="mdl-data-table__cell--non-numeric">' + pd.type + '</td>' +
                 '<td class="mdl-data-table__cell--non-numeric">' + pd.version + '</td>' +
                 '<td class="mdl-data-table__cell--non-numeric">' + node.minLevel + '</td>' +

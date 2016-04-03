@@ -309,7 +309,7 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
       {
          const value = childDepMap[key];
 
-         const packageData = s_PARSE_PACKAGE(value);
+         const packageData = s_PARSE_PACKAGE(value, key);
 
          if (packageData.type !== 'npm' && packageData.type !== 'github') { continue; }
 
