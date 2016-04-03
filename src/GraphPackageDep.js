@@ -121,6 +121,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
    const d3Graph = fs.readFileSync('./template/html/d3-graph.js', 'utf8');
    const styleCSS = fs.readFileSync('./template/html/style.css', 'utf8');
    const indexHTML = fs.readFileSync('./template/html/index.html', 'utf8');
+   const tableSorter = fs.readFileSync('./template/html/jquery-tablesorter.js', 'utf8');
 
    // Parse top level packages
    for (const key in topLevelPackages)
@@ -268,7 +269,8 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
       packageDataAll: JSON.stringify(graphPackageDataAll),
       packageDataDev: JSON.stringify(graphPackageDataDev),
       packageDataMain: JSON.stringify(graphPackageDataMain),
-      js: d3Graph,
+      js: tableSorter,
+      js2: d3Graph,
       maxPackageLevel: graphPackageDataAll.maxLevel,
       title: rootPackageName
    };

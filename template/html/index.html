@@ -70,7 +70,8 @@
 </div>
 
 <div class="control-table hidden">
-   <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+   <div style="display: block; overflow: auto;">
+   <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp tablesorter" id="nodeTable">
       <thead>
       <tr>
          <th class="mdl-data-table__cell--non-numeric">Package</th>
@@ -82,6 +83,7 @@
       <tbody>
       </tbody>
    </table>
+   </div>
 </div>
 
 <div id="contextpopup">
@@ -106,6 +108,7 @@
    var getPackageDataMain = function() { return <%= packageDataMain %>; };
 
    <%= js %>
+   <%= js2 %>
 </script>
 
 </body>

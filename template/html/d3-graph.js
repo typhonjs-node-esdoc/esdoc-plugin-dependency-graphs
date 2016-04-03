@@ -127,6 +127,8 @@
        .attr('height', graphHeight)
        .attr('transform', 'translate(' + zoom.translate() + ')' + ' scale(' + zoom.scale() + ')');
 
+      $('#nodeTable').tablesorter({ sortMultiSortKey: '' });
+
       updateAll();
 
       // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
@@ -895,6 +897,11 @@
             tr.on('mouseleave', onControlTableRowMouseOver.bind(this, nodes, links, node, false));
             tr.on('contextmenu', onControlTableRowContextClick.bind(this, node));
          });
+
+         // Removes sort order for any header and signals update for new data
+         $('#nodeTable th').removeClass('headerSortDown');
+         $('#nodeTable th').removeClass('headerSortUp');
+         $('#nodeTable').trigger('update');
       }
    }
 
