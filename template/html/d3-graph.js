@@ -650,6 +650,7 @@
 
       if (!Array.isArray(childNodes) && !Array.isArray(childNodes['0'])) { return; }
 
+      // Get the child nodes group from selection.
       childNodes = childNodes['0'];
 
       for (var cntr = 0; cntr < childNodes.length; cntr++)
