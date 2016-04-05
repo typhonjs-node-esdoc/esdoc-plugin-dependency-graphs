@@ -82,15 +82,15 @@
 
       // Setup drag callbacks for nodes. If a node is clicked and dragged it becomes fixed.
       layout.drag()
-       .on('dragstart', function(d)
+       .on('dragstart', function(targetNode)
        {
           d3.event.sourceEvent.stopPropagation();
-          d3.select(this).classed('dragging', true).classed('fixed', d.fixed = true);
+          d3.select(this).classed('dragging', true).classed('fixed', targetNode.fixed = true);
           detectAllNodesFixed();
        })
-       .on('drag', function(d)
+       .on('drag', function(targetNode)
        {
-          d3.select(this).attr('cx', d.x = d3.event.x).attr('cy', d.y = d3.event.y);
+          d3.select(this).attr('cx', targetNode.x = d3.event.x).attr('cy', targetNode.y = d3.event.y);
        })
        .on('dragend', function()
        {
@@ -192,11 +192,11 @@
       }
    }
 
-   function fadeRelatedNodes(d, selected, nodes, links)
+   function fadeRelatedNodes(targetNode, selected, nodes, links)
    {
       var opacity = selected ? 0.1 : 1;
 
-      var elm = findElementByNode('circle', d);
+      var elm = findElementByNode('circle', targetNode);
 
       // Highlight circle
       elm.classed('selected', opacity < 1);
@@ -204,9 +204,9 @@
       // Clean
       $('path.link').removeAttr('data-show');
 
-      nodes.style('stroke-opacity', function(o)
+      nodes.style('stroke-opacity', function(otherNode)
       {
-         var thisOpacity = isConnected(d, o) ? 1 : opacity;
+         var thisOpacity = isConnected(targetNode, otherNode) ? 1 : opacity;
 
          this.setAttribute('fill-opacity', thisOpacity);
          this.setAttribute('stroke-opacity', thisOpacity);
@@ -217,19 +217,19 @@
          return thisOpacity;
       });
 
-      links.style('stroke-opacity', function(o)
+      links.style('stroke-opacity', function(otherNode)
       {
-         if (o.source === d)
+         if (otherNode.source === targetNode)
          {
             // Highlight target / sources of the link
-            var elmNodes = graph.selectAll('.' + formatClassName('node', o.target));
+            var elmNodes = graph.selectAll('.' + formatClassName('node', otherNode.target));
             elmNodes.attr('fill-opacity', 1);
             elmNodes.attr('stroke-opacity', 1);
 
             elmNodes.classed('dimmed', false);
 
             // Highlight arrows
-            var elmCurrentLink = $('path.link[data-source=' + o.source.index + ']');
+            var elmCurrentLink = $('path.link[data-source=' + otherNode.source.index + ']');
             elmCurrentLink.attr('data-show', true);
             elmCurrentLink.attr('marker-end', 'url(#regular)');
 
@@ -388,7 +388,7 @@
       // Adjust current level if it is greater than max level for current scope.
       if (appOptions.currentLevel > maxLevel) { appOptions.currentLevel = maxLevel; }
 
-      // Update control level UI based on current and max level for given package scope.
+      // Update control level UI based on current and max level for given scope.
       $('.control-level input').attr({ max: maxLevel });
       $('.control-level input').val(appOptions.currentLevel);
       $('.control-level label').html(appOptions.currentLevel);
@@ -511,12 +511,12 @@
    /**
     * Shows the node context menu
     *
-    * @param {object}   d - A node.
+    * @param {object}   targetNode - The target node.
 
     * @param {object}   coords - Object containing x / y position for context menu; if not provided Node position
     *                            determines coords.
     */
-   function onNodeContextClick(d, coords)
+   function onNodeContextClick(targetNode, coords)
    {
       // Hides any existing node context menu.
       hideNodeContextMenu();
@@ -533,16 +533,16 @@
          switch (index)
          {
             case 0:
-               $(this).text('Open on ' + d.packageData.type);
-               $(this).data('extra', d.packageData.link);
+               $(this).text('Open on ' + targetNode.packageData.type);
+               $(this).data('extra', targetNode.packageData.link);
                break;
 
             case 1:
-               $(this).text('Fullname: ' + d.packageData.fullName);
+               $(this).text('Fullname: ' + targetNode.packageData.fullName);
                break;
 
             case 2:
-               $(this).text('Version: ' + d.packageData.version);
+               $(this).text('Version: ' + targetNode.packageData.version);
                break;
          }
       });
@@ -551,7 +551,7 @@
       setTimeout(function()
       {
          // Assign new selected context node and highlight related nodes.
-         selectedContextNode = d;
+         selectedContextNode = targetNode;
          fadeRelatedNodes(selectedContextNode, true, nodes, links);
 
          var contextMenuButton = $("#context-menu");
@@ -565,17 +565,17 @@
       }, 100);
    }
 
-   function onNodeMouseDown(nodes, links, d)
+   function onNodeMouseDown(nodes, links, targetNode)
    {
       hideNodeContextMenu();
 
       // Only select / drag nodes with left clicked otherwise stop propagation of event.
       if (d3.event.button === 0)
       {
-         selectedDragNode = d;
+         selectedDragNode = targetNode;
 
          // Select / highlight related nodes or remove attributes based on enter state.
-         fadeRelatedNodes(d, true, nodes, links);
+         fadeRelatedNodes(targetNode, true, nodes, links);
       }
       else
       {
@@ -583,13 +583,13 @@
       }
    }
 
-   function onNodeMouseOverOut(nodes, links, enter, d)
+   function onNodeMouseOverOut(nodes, links, enter, targetNode)
    {
       // If there is an existing selected node then exit early.
       if (isNodeSelected()) { return; }
 
       // Select / highlight related nodes or remove attributes based on enter state.
-      fadeRelatedNodes(d, enter, nodes, links);
+      fadeRelatedNodes(targetNode, enter, nodes, links);
    }
 
    function onResize()
@@ -613,17 +613,17 @@
 
    function onTick()
    {
-      nodes.attr('cx', function(d) { return d.x; })
-       .attr('cy', function(d) { return d.y; })
-       .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+      nodes.attr('cx', function(node) { return node.x; })
+       .attr('cy', function(node) { return node.y; })
+       .attr('transform', function(node) { return 'translate(' + node.x + ',' + node.y + ')'; });
 
       // Pull data from data.nodes array.
-      links.attr('d', function(d)
+      links.attr('d', function(link)
       {
-         var sourceX = data.nodes[d.source.index].x;
-         var sourceY = data.nodes[d.source.index].y;
-         var targetX = data.nodes[d.target.index].x;
-         var targetY = data.nodes[d.target.index].y;
+         var sourceX = data.nodes[link.source.index].x;
+         var sourceY = data.nodes[link.source.index].y;
+         var targetX = data.nodes[link.target.index].x;
+         var targetY = data.nodes[link.target.index].y;
 
          var dx = targetX - sourceX,
           dy = targetY - sourceY,
@@ -676,14 +676,20 @@
       recycleGraph();
 
       // Lines
-      // Note: on second render o.source / target will be an object instead of a number.
+      // Note: on second render link.source / target will be an object instead of a number.
       links = graph.append(getSVG('g')).selectAll('line')
        .data(data.links)
        .enter().append(getSVG('path'))
        .attr('class', 'link')
-       .attr('data-target', function(o) { return typeof o.target === 'number' ? o.target : o.target.index; })
-       .attr('data-source', function(o) { return typeof o.source === 'number' ? o.source : o.source.index; })
-       .attr('marker-end', function() { return 'url(#regular)'; });
+       .attr('marker-end', function() { return 'url(#regular)'; })
+       .attr('data-source', function(link)
+       {
+          return typeof link.source === 'number' ? link.source : link.source.index;
+       })
+       .attr('data-target', function(link)
+       {
+          return typeof link.target === 'number' ? link.target : link.target.index;
+       });
 
       // Nodes
       nodes = graph.append(getSVG('g')).selectAll('node')
@@ -693,21 +699,21 @@
        .attr('class', 'node');
 
       // Circles
-      nodes.attr('class', function(d) { return formatClassName('node', d); });
+      nodes.attr('class', function(node) { return formatClassName('node', node); });
       nodes.append(getSVG('circle'))
-       .attr('id', function(d) { return formatClassName('id', d); })
-       .attr('class', function(d) { return formatClassName('circle', d) + ' ' + d.packageData.type; })
+       .attr('id', function(node) { return formatClassName('id', node); })
+       .attr('class', function(node) { return formatClassName('circle', node) + ' ' + node.packageData.type; })
        .attr('r', circleRadius)
        .on('contextmenu', onNodeContextClick)
        .on('mousedown', onNodeMouseDown.bind(this, nodes, links))
        .on('mouseover', onNodeMouseOverOut.bind(this, nodes, links, true))
        .on('mouseout', onNodeMouseOverOut.bind(this, nodes, links, false))
-       .on('dblclick.zoom', function(d) // Centers view on node.
+       .on('dblclick.zoom', function(node) // Centers view on node.
        {
           d3.event.stopPropagation();
 
-          var dcx = (window.innerWidth / 2 - d.x * zoom.scale());
-          var dcy = (window.innerHeight / 2 - d.y * zoom.scale());
+          var dcx = (window.innerWidth / 2 - node.x * zoom.scale());
+          var dcy = (window.innerHeight / 2 - node.y * zoom.scale());
 
           zoom.translate([dcx, dcy]);
 
@@ -720,19 +726,24 @@
       nodes.append(getSVG('text'))
        .attr('x', 15)
        .attr('y', '.31em')
-       .attr('class', function(d) { return 'shadow ' + formatClassName('text', d); })
-       .text(function(d)
+       .attr('class', function(node) { return 'shadow ' + formatClassName('text', node); })
+       .text(function(node)
        {
-          return (appOptions.showFullNames ? d.packageData.fullName : d.packageData.name) + ' (' + d.minLevel +')';
+          return (appOptions.showFullNames ? node.packageData.fullName : node.packageData.name) +
+           ' (' + node.minLevel +')';
        });
 
       nodes.append(getSVG('text'))
-       .attr('class', function(d) { return d.packageData.isAliased ? 'isAliased ' : '' + formatClassName('text', d); })
+       .attr('class', function(node)
+       {
+          return node.packageData.isAliased ? 'isAliased ' : '' + formatClassName('text', node);
+       })
        .attr('x', 15)
        .attr('y', '.31em')
-       .text(function(d)
+       .text(function(node)
        {
-          return (appOptions.showFullNames ? d.packageData.fullName : d.packageData.name) + ' (' + d.minLevel +')';
+          return (appOptions.showFullNames ? node.packageData.fullName : node.packageData.name) +
+           ' (' + node.minLevel +')';
        });
 
       // Set the force layout nodes / links and start the bounce.
@@ -743,7 +754,7 @@
       linkedByIndex = {};
 
       // Build linked index
-      data.links.forEach(function(d) { linkedByIndex[d.source.index + ',' + d.target.index] = true; });
+      data.links.forEach(function(node) { linkedByIndex[node.source.index + ',' + node.target.index] = true; });
 
       // Set a low alpha to provide minimal bounce when just redrawing.
       if (options.redrawOnly) { layout.alpha(0.01); }
@@ -770,7 +781,7 @@
    function setNodesFixed(fixed)
    {
       // Resets any fixed node state.
-      if (nodes) { nodes.each(function(d) { d3.select(this).classed('fixed', d.fixed = fixed); }); }
+      if (nodes) { nodes.each(function(node) { d3.select(this).classed('fixed', node.fixed = fixed); }); }
 
       // Copy existing sim data to any package scope that contains the same node ID.
       for (var key in dataPackageMap) { dataPackageMap[key].nodes.forEach(function(node) { node.fixed = fixed; }); }
@@ -882,15 +893,15 @@
       {
          data.nodes.forEach(function(node)
          {
-            var pd = node.packageData;
-            var name = appOptions.showFullNames ? pd.fullName : pd.name;
-            var isAliased = pd.isAliased ? ' isAliased' : '';
+            var nd = node.packageData;
+            var name = appOptions.showFullNames ? nd.fullName : nd.name;
+            var isAliased = nd.isAliased ? ' isAliased' : '';
 
             var tr = $(
              '<tr>' +
                 '<td class="mdl-data-table__cell--non-numeric' + isAliased + '">' + name + '</td>' +
-                '<td class="mdl-data-table__cell--non-numeric">' + pd.type + '</td>' +
-                '<td class="mdl-data-table__cell--non-numeric">' + pd.version + '</td>' +
+                '<td class="mdl-data-table__cell--non-numeric">' + nd.type + '</td>' +
+                '<td class="mdl-data-table__cell--non-numeric">' + nd.version + '</td>' +
                 '<td class="mdl-data-table__cell--non-numeric">' + node.minLevel + '</td>' +
              '</tr>');
 
