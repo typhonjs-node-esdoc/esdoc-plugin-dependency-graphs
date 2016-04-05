@@ -970,9 +970,9 @@
 
          var elm = findElementByNode('circle', selectedDragNode);
 
-         var elmAttr = elm["0"]["0"];
+         var dragNode = elm.node();
 
-         var coords = getElementCoords(elmAttr, { x: elmAttr.getAttribute('cx'), y: elmAttr.getAttribute('cy') });
+         var coords = getElementCoords(dragNode, { x: dragNode.getAttribute('cx'), y: dragNode.getAttribute('cy') });
 
          var a = pageX - coords.x;
          var b = pageY - coords.y;
