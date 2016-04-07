@@ -609,14 +609,11 @@
 
       layout.size([graphWidth, graphHeight]).resume();
 
-      // Potentially resets any fixed node state.
-      if (appOptions.unfreezeOnResize) { setNodesFixed(false); }
-
       updateMenuUI();
 
       updateTableUIExtent();
 
-      centerGraph(zoomFit());
+      centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 2000);
    }
 
    function onTick()
@@ -936,11 +933,15 @@
    function updateTableUIExtent()
    {
       var tableDiv = $('.control-table-inner');
+      var nodeTable = $('#nodeTable');
+
+      var tableHeight = nodeTable.height();
 
       var offset = tableDiv.offset();
-      var tableHeight = window.innerHeight - offset.top - 20;
+      var maxTableHeight = window.innerHeight - offset.top - 20;
 
-      tableDiv.css('max-height', tableHeight);
+      tableDiv.css('max-height', maxTableHeight);
+      nodeTable.css('margin-right', tableHeight > maxTableHeight ? '10px' : '0px');
    }
 
    function zoomFit()
