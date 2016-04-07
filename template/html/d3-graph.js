@@ -161,39 +161,20 @@
          if (typeof newScale !== 'number') { throw new TypeError("centerGraph error: 'newScale' is not a 'number'."); }
          if (typeof duration !== 'number') { throw new TypeError("centerGraph error: 'duration' is not a 'number'."); }
 
-var bounds = graph.node().getBBox();
-var parent = graph.node().parentElement;
-var fullWidth = parent.clientWidth, fullHeight = parent.clientHeight;
-var width = bounds.width, height = bounds.height;
+         var bounds = graph.node().getBBox();
 
-/*
- var scale = 0.75 / Math.max(width / fullWidth, height / fullHeight);
- scale = Math.max(Math.min(scale, maxScaleExtent), minScaleExtent);
- */
+         var centerSVGX = (graphWidth * newScale / 2);
+         var centerSVGY = (graphHeight * newScale / 2);
 
-console.log('!! centerGraph - 0 - parent.clientWidth: ' + fullWidth +'; parent.clientHeight: ' + fullHeight);
-console.log('!! centerGraph - 1 - bounds.width: ' + width +'; bounds.height: ' + height +'; bounds.x: ' + bounds.x + '; bounds.y: ' + bounds.y);
-console.log('!! centerGraph - 2 - graphWidth: ' + graphWidth +'; graphHeight: ' + graphHeight);
-console.log('!! centerGraph - 3 - newScale: ' + newScale);
-
-newScale = 1;
+         var centerGraphX = (bounds.x * newScale) + (bounds.width * newScale / 2);
+         var centerGraphY = (bounds.y * newScale) + (bounds.height * newScale / 2);
 
          // Translate
          var centerTranslate =
          [
-            (graphWidth / 2) - (graphWidth * newScale / 2),
-            (graphHeight / 2) - (graphHeight * newScale / 2)
+            (graphWidth / 2) - centerSVGX + (centerSVGX - centerGraphX),
+            (graphHeight / 2) - centerSVGY + (centerSVGY - centerGraphY)
          ];
-
-         // Translate
-         var testTranslate =
-         [
-            (graphWidth / 2) - (width * newScale / 2),
-            (graphHeight / 2) - (height * newScale / 2)
-         ];
-
-
-console.log('!! centerGraph - 4 - centerTranslate: ' + JSON.stringify(centerTranslate) +'; testTranslate: ' + JSON.stringify(testTranslate));
 
          // Store values
          zoom
