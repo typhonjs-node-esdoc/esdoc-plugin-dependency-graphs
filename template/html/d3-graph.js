@@ -404,7 +404,7 @@
       // Load graph data
       updateAll({ redrawOnly: true });
 
-      // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
+      // Center graph w/ zoom fit w/ 1 second transition applied after a potential 2 seconds delay for debounce.
       centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 2000);
    }
 
@@ -417,8 +417,8 @@
 
       updateAll({ redrawOnly: true });
 
-      // Center graph w/ zoom fit w/ 200 millisecond transition applied after half second delay for debounce.
-      centerGraph(zoomFit, 200, data.allNodesFixed ? 0 : 500);
+      // Center graph w/ zoom fit w/ 1 second transition applied after a potential 2 seconds delay for debounce.
+      centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 2000);
    }
 
    function onControlLinksClicked()
