@@ -127,7 +127,18 @@
        .attr('height', graphHeight)
        .attr('transform', 'translate(' + zoom.translate() + ')' + ' scale(' + zoom.scale() + ')');
 
-      $('#nodeTable').tablesorter({ sortMultiSortKey: '' });
+      // Initialize tablesorter
+      $('#nodeTable').tablesorter(
+      {
+         widgets: ['stickyHeaders'],
+         widgetOptions:
+         {
+            stickyHeaders_filteredToTop: true,
+            stickyHeaders_cloneId : '-sticky',
+            stickyHeaders_attachTo : '.control-table-inner'
+         },
+         sortMultiSortKey: ''
+      });
 
       updateAll();
 
