@@ -21,8 +21,10 @@
       unfreezeOnResize: true
    };
 
+   // Stores menu options that have a toggle state.
    var appMenuToggleOptions = ['maxDepthSticky', 'showFullNames', 'showTableView', 'unfreezeOnResize'];
 
+   // Gathers data from template filled functions.
    var dataPackageMap =
    {
       'all': getPackageDataAll(),
@@ -30,6 +32,7 @@
       'main': getPackageDataMain()
    };
 
+   // Provides a cache of recycled SVG elements.
    var svgElementMap =
    {
       circle: [],
@@ -50,9 +53,12 @@
       }
    }
 
+   /**
+    * Bootstraps the setup of the graph.
+    */
    function bootstrap()
    {
-      // Controllers
+      // Hook up controllers
       $('.control-zoom button').on('click', onControlZoomClicked);
       $('.control-level input').on('change', onControlLevelChanged);
       $('.control-deps input').on('click', onControlDepsClicked);
@@ -61,6 +67,7 @@
 
       $('#contextpopup li[data-action]').on('click', onNodeContextMenuClick);
 
+      // Gather current level and scope from template values.
       appOptions.currentLevel = parseInt($('.control-level input').val());
       appOptions.currentScope = $('.control-deps input:radio[name=dep]:checked').val();
 
@@ -71,6 +78,8 @@
 
       graphWidth = window.innerWidth;
       graphHeight = window.innerHeight;
+
+      d3.select(window).on('resize', onResize);
 
       // Setup layout
       layout = d3.layout.force()
@@ -144,16 +153,17 @@
 
       // Center graph w/ zoom fit w/ 1 second transition applied after 4 seconds delay for debounce.
       centerGraph(zoomFit, 1000, 4000);
-
-      d3.select(window).on('resize', onResize);
    }
 
    /**
-    * Centers the graph.
+    * Centers the graph. All parameters can be either a number or a function evaluated for a number result.
     *
-    * @param {number|function}   newScale
-    * @param {number|function}   duration
-    * @param {number}            delay
+    * `newScale` and `duration` are evaluated in the centering anonymous function allowing values to be determined
+    * after debounce.
+    *
+    * @param {number|function}   newScale - New scale value for graph.
+    * @param {number|function}   duration - Duration of centering transition.
+    * @param {number|function}   delay - Delay for debounce before centering occurs.
     */
    function centerGraph(newScale, duration, delay)
    {
@@ -196,9 +206,16 @@
          graph.transition()
           .duration(duration)
           .attr('transform', 'translate(' + zoom.translate() + ')' + ' scale(' + zoom.scale() + ')');
+
+         // Hides any existing node context menu.
+         hideNodeContextMenu();
+
       }, delay);
    }
 
+   /**
+    * Helper function to determin if all nodes are fixed. This is run after any node is dragged and set to fixed.
+    */
    function detectAllNodesFixed()
    {
       if (data)
@@ -211,6 +228,14 @@
       }
    }
 
+   /**
+    * Fades and unfades connected nodes to a given `targetNode`.
+    *
+    * @param {object}   targetNode - The target node from which fading occurs / connections are calculated.
+    * @param {boolean}  selected - Indicates if the fade is in / out; true fades nodes / false un-fades nodes.
+    * @param {Array}    nodes - An array of all graph nodes.
+    * @param {Array}    links - An array of all graph links.
+    */
    function fadeRelatedNodes(targetNode, selected, nodes, links)
    {
       var opacity = selected ? 0.1 : 1;
@@ -220,9 +245,11 @@
       // Highlight circle
       elm.classed('selected', opacity < 1);
 
-      // Clean
+      // Clean links
       $('path.link').removeAttr('data-show');
 
+      // Traverse all nodes and set `dimmed` class to nodes that are dimmed / not connected in addition to setting
+      // fill and stroke opacity.
       nodes.style('stroke-opacity', function(otherNode)
       {
          var thisOpacity = isConnected(targetNode, otherNode) ? 1 : opacity;
@@ -236,6 +263,7 @@
          return thisOpacity;
       });
 
+      // Traverse all links and set `data-show` and `marker-end` for connected links given the `targetNode`.
       links.style('stroke-opacity', function(otherNode)
       {
          if (otherNode.source === targetNode)
@@ -265,6 +293,12 @@
       elmAllLinks.attr('marker-end', opacity === 1 ? 'url(#regular)' : '');
    }
 
+   /**
+    * A helper to select a given SVG element from given node data.
+    *
+    * @param {string}   prefix - String prefix.
+    * @param {object}   node - Node object
+    */
    function findElementByNode(prefix, node)
    {
       var selector = '.' + formatClassName(prefix, node);
@@ -275,21 +309,26 @@
     * Replaces semver and other special characters with `-`.
     *
     * @param {string}   prefix - String prefix.
-    * @param {object}   object - Node object
+    * @param {object}   node - Node object
     * @returns {string}
     */
-   function formatClassName(prefix, object)
+   function formatClassName(prefix, node)
    {
-      return prefix + '-' + object.id;
+      return prefix + '-' + node.id;
    }
 
-   // Pass in the element and its pre-transform coords
-   function getElementCoords(element, coords)
+   /**
+    * Pass in the element and the screen coordinates are returned.
+    *
+    * @param element
+    *
+    * @returns {{x: number, y: number}}
+    */
+   function getElementCoords(element)
    {
-      var ctm = element.getCTM(),
-       xn = ctm.e + coords.x * ctm.a,
-       yn = ctm.f + coords.y * ctm.d;
-      return { x: xn, y: yn };
+      var ctm = element.getCTM();
+
+      return { x: ctm.e + element.getAttribute('cx') * ctm.a, y: ctm.f + element.getAttribute('cy') * ctm.d };
    }
 
    /**
@@ -297,6 +336,7 @@
     * data specified by D3 will be copied to the element. Returns a function which is evaluated by D3.
     *
     * @param {string}   elementType - SVG element: `circle`, `g`, `path`, or `text`.
+    *
     * @returns {*}
     */
    function getSVG(elementType)
@@ -373,9 +413,17 @@
       }
    }
 
-   function isConnected(a, b)
+   /**
+    * Checks if a target node is connected to another given node by checking `index` or the `linkedByIndex` map.
+    *
+    * @param {object}   targetNode
+    * @param {object}   otherNode
+    *
+    * @returns {boolean}
+    */
+   function isConnected(targetNode, otherNode)
    {
-      return a.index === b.index || linkedByIndex[a.index + ',' + b.index];
+      return targetNode.index === otherNode.index || linkedByIndex[targetNode.index + ',' + otherNode.index];
    }
 
    /**
@@ -388,6 +436,9 @@
       return typeof selectedDragNode !== 'undefined' || typeof selectedContextNode !== 'undefined';
    }
 
+   /**
+    * Handles responding to the dependencies radio group.
+    */
    function onControlDepsClicked()
    {
       // Do nothing if scope has not changed
@@ -412,13 +463,16 @@
       $('.control-level input').val(appOptions.currentLevel);
       $('.control-level label').html(appOptions.currentLevel);
 
-      // Load graph data
+      // Redraw graph data
       updateAll({ redrawOnly: true });
 
       // Center graph w/ zoom fit w/ 1 second transition applied after a potential 2 seconds delay for debounce.
       centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 2000);
    }
 
+   /**
+    * Handles responding to the level slider.
+    */
    function onControlLevelChanged()
    {
       appOptions.currentLevel = parseInt(this.value);
@@ -426,12 +480,16 @@
       $('.control-level input').val(appOptions.currentLevel);
       $('.control-level label').html(appOptions.currentLevel);
 
+      // Redraw graph data
       updateAll({ redrawOnly: true });
 
       // Center graph w/ zoom fit w/ 1 second transition applied after a potential 2 seconds delay for debounce.
       centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 2000);
    }
 
+   /**
+    * Handles reverse links input reversing the graph links then redrawing the graph.
+    */
    function onControlLinksClicked()
    {
       reverseGraphLinks();
@@ -439,6 +497,9 @@
       renderGraph({ redrawOnly: true });
    }
 
+   /**
+    * Handles responding to overflow menu selections.
+    */
    function onControlMenuClicked()
    {
       switch ($(this).data('action'))
@@ -471,12 +532,26 @@
       setTimeout(updateMenuUI, 200);
    }
 
+   /**
+    * Handles a context click on a table row showing the related node context menu.
+    *
+    * @param {object}   node - Target node.
+    * @param {object}   event - mouse event
+    */
    function onControlTableRowContextClick(node, event)
    {
       event.preventDefault(); // Prevents default browser context menu from showing.
       onNodeContextClick(node, { x: event.pageX, y: event.pageY });
    }
 
+   /**
+    * Handles a context click on a table row showing the related node context menu. Defers to `onNodeMouseOverOut`.
+    *
+    * @param {Array}    nodes - All graph nodes.
+    * @param {Array}    links - All graph links.
+    * @param {object}   node - Target node.
+    * @param {boolean}  enter - true when mouse entering / false when mouse exiting.
+    */
    function onControlTableRowMouseOver(nodes, links, node, enter)
    {
       // Hide the node context menu if currently showing when a new table row / node is moused over.
@@ -485,6 +560,9 @@
       onNodeMouseOverOut(nodes, links, enter, node);
    }
 
+   /**
+    * Handles clicks on zoom control buttons and invokes `centerGraph` with new scale value.
+    */
    function onControlZoomClicked()
    {
       var newScale = 1;
@@ -509,6 +587,9 @@
       centerGraph(newScale);
    }
 
+   /**
+    * Handles clicks on the node context menu invoking any active actions.
+    */
    function onNodeContextMenuClick()
    {
       // When a context menu is selected remove node highlighting.
@@ -540,13 +621,11 @@
       // Hides any existing node context menu.
       hideNodeContextMenu();
 
-      if (typeof coords !== 'object')
-      {
-         coords = getElementCoords(this, { x: this.getAttribute('cx'), y: this.getAttribute('cy') });
-      }
+      if (typeof coords !== 'object') { coords = getElementCoords(this); }
 
       var popupmenu = $('#contextpopup .mdl-menu__container');
 
+      // Populate data for the context menu.
       popupmenu.find('li').each(function( index )
       {
          switch (index)
@@ -571,11 +650,14 @@
       {
          // Assign new selected context node and highlight related nodes.
          selectedContextNode = targetNode;
+
          fadeRelatedNodes(selectedContextNode, true, nodes, links);
 
+         // For MDL a programmatic click of the hidden context menu.
          var contextMenuButton = $("#context-menu");
          contextMenuButton.click();
 
+         // Necessary to defer reposition of the context menu.
          setTimeout(function()
          {
             popupmenu.parent().css({ position: 'relative' });
@@ -584,6 +666,14 @@
       }, 100);
    }
 
+   /**
+    * Handles a mouse down action on a graph node. Hides any showing context menu. For left clicks the selected node
+    * becomes the drag target and related nodes are faded. Any other mouse button is ignored.
+    *
+    * @param {Array}    nodes - All graph nodes.
+    * @param {Array}    links - All graph links.
+    * @param {object}   targetNode - The target node.
+    */
    function onNodeMouseDown(nodes, links, targetNode)
    {
       hideNodeContextMenu();
@@ -602,6 +692,14 @@
       }
    }
 
+   /**
+    * Handles fading related nodes to the given `targetNode` if there is no currently selected node.
+    *
+    * @param {Array}    nodes - All graph nodes.
+    * @param {Array}    links - All graph links.
+    * @param {boolean}  enter - true when mouse entering / false when mouse exiting.
+    * @param {object}   targetNode - The target node.
+    */
    function onNodeMouseOverOut(nodes, links, enter, targetNode)
    {
       // If there is an existing selected node then exit early.
@@ -611,8 +709,12 @@
       fadeRelatedNodes(targetNode, enter, nodes, links);
    }
 
+   /**
+    * Handles the window resize event.
+    */
    function onResize()
    {
+      // Update graph parameters.
       graphWidth = window.innerWidth;
       graphHeight = window.innerHeight;
 
@@ -624,16 +726,22 @@
 
       updateTableUIExtent();
 
+      // Hides any existing node context menu.
+      hideNodeContextMenu();
+
       centerGraph(zoomFit, 1000, data.allNodesFixed ? 0 : 2000);
    }
 
+   /**
+    * D3 tick handler for the forced graph layout.
+    */
    function onTick()
    {
       nodes.attr('cx', function(node) { return node.x; })
        .attr('cy', function(node) { return node.y; })
        .attr('transform', function(node) { return 'translate(' + node.x + ',' + node.y + ')'; });
 
-      // Pull data from data.nodes array.
+      // Pull data from data.nodes array. Provides a curve to the links.
       links.attr('d', function(link)
       {
          var sourceX = data.nodes[link.source.index].x;
@@ -648,6 +756,9 @@
       });
    }
 
+   /**
+    * Handles the D3 zoom / scale event.
+    */
    function onZoomChanged()
    {
       var newScale = Math.max(d3.event.scale, minScaleExtent);
@@ -684,6 +795,14 @@
       }
    }
 
+   /**
+    * Renders the graph after recycling any nodes above the top level `g` SVGGElement.
+    *
+    * @param {object}   options - Optional parameters:
+    * ```
+    * (boolean)   redrawOnly - sets layout.alpha to a low value to reduce bounce.
+    * ```
+    */
    function renderGraph(options)
    {
       options = typeof options === 'object' ? options : {};
@@ -795,6 +914,11 @@
       }
    }
 
+   /**
+    * Sets all nodes fixed (freeze) or unfixed (unfreeze).
+    *
+    * @param {boolean}  fixed - Fixed state for all nodes.
+    */
    function setNodesFixed(fixed)
    {
       // Resets any fixed node state.
@@ -823,6 +947,9 @@
       updateTableUI();
    }
 
+   /**
+    * Filters graph data based on current app option parameters: `currentScope` and `currentLevel`.
+    */
    function updateGraphData()
    {
       // Copy existing data / node parameters to new filtered data;
@@ -881,6 +1008,9 @@
       data.allNodesFixed = allNodesFixed;
    }
 
+   /**
+    * Provides handling of changing menu text & material icons based on current state.
+    */
    function updateMenuUI()
    {
       if (data)
@@ -896,6 +1026,9 @@
       });
    }
 
+   /**
+    * Builds the table UI with all current node data and associates the active events on each row.
+    */
    function updateTableUI()
    {
       var table = $('.control-table tbody');
@@ -955,6 +1088,11 @@
       nodeTable.css('margin-right', tableHeight > maxTableHeight ? '10px' : '0px');
    }
 
+   /**
+    * Determines a new scale that fits the entire graph into view.
+    *
+    * @returns {number}
+    */
    function zoomFit()
    {
       var bounds = graph.node().getBBox();
@@ -1002,9 +1140,7 @@
 
          var elm = findElementByNode('circle', selectedDragNode);
 
-         var dragNode = elm.node();
-
-         var coords = getElementCoords(dragNode, { x: dragNode.getAttribute('cx'), y: dragNode.getAttribute('cy') });
+         var coords = getElementCoords(elm.node());
 
          var a = pageX - coords.x;
          var b = pageY - coords.y;
