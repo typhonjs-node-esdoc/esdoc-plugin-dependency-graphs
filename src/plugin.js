@@ -6,8 +6,9 @@ import fs               from 'fs-extra';
 import path             from 'path';
 
 import GraphPackageDep  from './GraphPackageDep.js';
+import GraphSourceDep   from './GraphSourceDep.js';
 
-let graphPackageDep;
+let graphPackageDep, graphSourceDep;
 
 // ESDoc plugin callbacks -------------------------------------------------------------------------------------------
 
@@ -25,6 +26,7 @@ export function onStart(ev)
    options.verbose = typeof options.verbose === 'boolean' ? options.verbose : false;
 
    graphPackageDep = new GraphPackageDep(options);
+   graphSourceDep = new GraphSourceDep(options);
 }
 
 /**
@@ -38,6 +40,7 @@ export function onStart(ev)
 export function onHandleConfig(ev)
 {
    graphPackageDep.onHandleConfig(ev);
+   graphSourceDep.onHandleConfig(ev);
 }
 
 /**
@@ -57,4 +60,14 @@ export function onHandleHTML(ev)
  */
 export function onComplete()
 {
+   graphPackageDep.onComplete();
+
+   try
+   {
+      graphSourceDep.onComplete();
+   } catch (err)
+   {
+      console.log('!! plugin - onComplete - err: ' + err);
+      throw err;
+   }
 }

@@ -2,31 +2,14 @@ import fs         from 'fs-extra';
 import path       from 'path';
 import _          from 'underscore';
 
-import JSPMParser from 'typhonjs-config-jspm-parse';
-
-import jspm       from 'jspm';   // Note: this could be dangerous for NPM < 3.0.
-
-let packagePath = './package.json';
+// Stores the path to generated ast.
+let astPath;
 
 // Stores the path to generated graphs.
 let docGraphPath;
 
 // Stores the root package name.
 let rootPackageName;
-
-// Stores values from `jspm.dependencies` from `package.json`.
-let jspmPackageMap;
-
-// Stores values from `jspm.devDependencies` from `package.json`.
-let jspmDevPackageMap;
-
-let uniqueDeps;
-let uniqueDevDeps;
-let uniqueSharedDep;
-let uniqueDepsAll;
-
-let childPackageMap;
-let topLevelPackages;
 
 const packageLinksAll = [];
 const packageLinksDev = [];
@@ -44,7 +27,7 @@ const packageNodeMapAll = new Map();
 const packageNodeMapDev = new Map();
 const packageNodeMapMain = new Map();
 
-export default class GraphPackageDep
+export default class GraphSourceDep
 {
    constructor(options)
    {
@@ -53,69 +36,143 @@ export default class GraphPackageDep
 
    onHandleConfig(ev)
    {
-      if (ev.data.config.package)
-      {
-         packagePath = ev.data.config.package;
-      }
-
+      astPath = `${ev.data.config.destination}${path.sep}ast${path.sep}source`;
       docGraphPath = `${ev.data.config.destination}${path.sep}graphs${path.sep}`;
-
-      // Get package.json as ESDoc will prepend the name of the module found in the package.json
-      try
-      {
-         const packageJSON = fs.readFileSync(packagePath, 'utf-8');
-         const packageObj = JSON.parse(packageJSON);
-
-         rootPackageName = packageObj.name;
-
-         jspmPackageMap = JSPMParser.getPackageJSPMDependencies(packageObj, jspmPackageMap, !this.options.verbose,
-          'esdoc-plugin-jspm-dependency-graph');
-
-         jspmDevPackageMap = JSPMParser.getPackageJSPMDevDependencies(packageObj, jspmDevPackageMap,
-          !this.options.verbose, 'esdoc-plugin-jspm-dependency-graph');
-      }
-      catch (err)
-      {
-         throw new Error(`Could not locate 'package.json' in package path '${packagePath}'.`);
-      }
-
-      // Filter package maps so that they only include NPM / GitHub packages.
-      jspmPackageMap = s_FILTER_PACKAGE_MAP(jspmPackageMap);
-      jspmDevPackageMap = s_FILTER_PACKAGE_MAP(jspmDevPackageMap);
-
-      const rootPath = ev.data.config.hasOwnProperty('jspmRootPath') ? ev.data.config.jspmRootPath :
-       JSPMParser.getRootPath();
-
-      // ESDoc uses the root directory name if no package.json with a package name exists.
-      const rootDir = rootPath.split(path.sep).pop();
-
-      rootPackageName = rootPackageName || rootDir;
-
-      // Set the package path to the local root where config.js is located.
-      jspm.setPackagePath(rootPath);
-
-      // Create SystemJS Loader
-      const System = new jspm.Loader();
-
-      const packageResolver = JSPMParser.getPackageResolver(System);
-
-      uniqueDeps = packageResolver.getUniqueDependencyList(Object.keys(jspmPackageMap));
-      uniqueDevDeps = packageResolver.getUniqueDependencyList(Object.keys(jspmDevPackageMap));
-      uniqueSharedDep = _.intersection(uniqueDeps, uniqueDevDeps);
-      uniqueDepsAll = packageResolver.getUniqueDependencyList();
-
-      topLevelPackages = s_FILTER_PACKAGE_MAP(packageResolver.topLevelPackages);
-      childPackageMap = packageResolver.childPackageMap;
    }
 
-   /**
-    * The search data file must have JSPM package paths replaced with normalized versions.
-    */
    onComplete()
    {
-      s_CREATE_GRAPH_JSPM_PACKAGES(this.options);
+      const parsedFiles = s_PARSE_AST_FILES(s_PARSE_FILE_LIST(s_READDIR_TRAVERSE(astPath)));
+
+      console.log('!! GSP - onComplete - parsedFiles: ' + JSON.stringify(parsedFiles));
+
    }
 }
+
+const s_PARSE_AST_FILES = (fileEntries) =>
+{
+   fileEntries.forEach((entry) =>
+   {
+      const ast = fs.readJsonSync(entry.astFilePath);
+
+      entry.ast = { imports: [], exports: [] };
+
+      if (Array.isArray(ast.body))
+      {
+         ast.body.forEach((astEntry) =>
+         {
+            switch (astEntry.type)
+            {
+               case 'ExportDefaultDeclaration':
+                  break;
+
+               case 'ImportDeclaration':
+                  entry.ast.imports.push(
+                  {
+                     type: astEntry.specifiers[0].type,
+                     name: astEntry.specifiers[0].local.name,
+                     filePath: astEntry.source.value
+                  });
+                  break;
+            }
+         });
+      }
+   });
+
+   return fileEntries;
+};
+
+const s_PARSE_FILE_LIST = (fileList) =>
+{
+   const parsedFiles = [];
+
+   const astPathSep = `${astPath}${path.sep}`;
+
+   const githubPath = `jspm_packages${path.sep}github`;
+   const npmPath = `jspm_packages${path.sep}npm`;
+   const jspmPath = `jspm_packages`;
+
+   const pathSep = path.sep === '/' ? '\/' : path.sep;
+
+   const jspmGithubRegex = new RegExp(
+    `jspm_packages${pathSep}([^${pathSep}]*)${pathSep}([^${pathSep}]*)${pathSep}([^${pathSep}]*)${pathSep}(.*)`);
+
+   const jspmNPMRegex = new RegExp(`jspm_packages${pathSep}([^${pathSep}]*)${pathSep}(.*)`);
+
+   fileList.forEach((filePath) =>
+   {
+      const entry = { astFilePath: filePath };
+
+      // Remove ast path
+      let relFilePath = filePath.replace(astPathSep, '');
+      let lastIndex = relFilePath.lastIndexOf('.');
+
+      relFilePath = lastIndex > 0 ? relFilePath.slice(0, lastIndex) : relFilePath;
+
+      entry.relFilePath = relFilePath;
+
+      lastIndex = relFilePath.lastIndexOf(path.sep);
+      entry.relFileDir = lastIndex > 0 ? relFilePath.slice(0, lastIndex) : relFilePath;
+
+      entry.jspmManaged = relFilePath.startsWith(jspmPath);
+
+      if (relFilePath.startsWith(githubPath)) { entry.scm = 'github'; }
+      else if (relFilePath.startsWith(npmPath)) { entry.scm = 'npm'; }
+      else { entry.scm = 'none'; }
+
+      let match, match2;
+
+      switch (entry.scm)
+      {
+         case 'github':
+            match = relFilePath.match(jspmGithubRegex);
+            match2 = match[3].split('@');
+
+            entry.jspmPath = `github:${match[2]}/${match[3]}`;
+            entry.scmLink = `https://github.com/${match[2]}/${match2[0]}`;
+            entry.scmVersion = match2[1];
+
+            // Determine file name and extension.
+            lastIndex = match[4].lastIndexOf(path.sep);
+            match2 = (lastIndex > -1 && match[4].length >= lastIndex + 1 ? match[4].slice(lastIndex + 1) :
+             match[4]).split('.');
+
+            entry.fileName = match2[0];
+            entry.fileExtension = match2[1];
+            break;
+
+         case 'npm':
+            match = relFilePath.match(jspmNPMRegex);
+            match2 = match[2].split('@');
+            entry.jspmPath = `npm:${match[2]}`;
+            entry.scmLink = `https://www.npmjs.com/package/${match2[0]}`;
+            entry.scmVersion = match2[1];
+
+            // Determine file name and extension.
+            lastIndex = match[3].lastIndexOf(path.sep);
+            match2 = (lastIndex > -1 && match[3].length >= lastIndex + 1 ? match[3].slice(lastIndex + 1) :
+             match[3]).split('.');
+
+            entry.fileName = match2[0];
+            entry.fileExtension = match2[1];
+            break;
+
+         default:
+            // Determine file name and extension.
+            lastIndex = relFilePath.lastIndexOf(path.sep);
+            match2 = (lastIndex > -1 && relFilePath.length >= lastIndex + 1 ? relFilePath.slice(lastIndex + 1) :
+             relFilePath).split('.');
+
+            entry.fileName = match2[0];
+            entry.fileExtension = match2[1];
+      }
+
+      parsedFiles.push(entry);
+   });
+
+   return parsedFiles;
+};
+
 
 const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
 {
@@ -444,4 +501,32 @@ const s_PARSE_PACKAGE = (value, key) =>
 const s_SANITIZE_CSS = (value) =>
 {
    return value.replace(/(\.|\/|:|@|\^|>=|>|<=|<|~|\*)/gi, '-');
+};
+
+/**
+ * Recursively creates a file list from a given directory.
+ *
+ * @param {string}   dir - A directory path.
+ * @param {Array}    filelist - An array of files.
+ * @returns {*|Array}
+ */
+const s_READDIR_TRAVERSE = (dir, filelist) =>
+{
+   const files = fs.readdirSync(dir);
+
+   filelist = filelist || [];
+
+   files.forEach((file) =>
+   {
+      if (fs.statSync(`${dir}${path.sep}${file}`).isDirectory())
+      {
+         filelist = s_READDIR_TRAVERSE(`${dir}${path.sep}${file}`, filelist);
+      }
+      else
+      {
+         filelist.push(`${dir}${path.sep}${file}`);
+      }
+   });
+
+   return filelist;
 };

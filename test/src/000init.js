@@ -9,20 +9,28 @@ import publisher  from '../../node_modules/esdoc/out/src/Publisher/publish.js';
 
 const config =
 {
-   source: './test/fixture',
+   source: './test/fixture/src',
    destination: './test/fixture/docs',
    plugins:
    [
-//      { name: 'esdoc-plugin-jspm' },
+      { name: 'esdoc-plugin-jspm' },
       {
-         name: './src/plugin.js',
-         option: { verbose: false }
-      }
-   ],
-   manual:
-   {
-      changelog: ["./CHANGELOG.md"]
-   }
+         name: 'esdoc-plugin-extends-replace',
+         option:
+         {
+            replace:
+            {
+               'backbone~[B|b]ackbone\\.Collection': 'backbone-parse-es6@[\\s\\S]+\/src\/ParseCollection',
+               'backbone~[B|b]ackbone\\.Events': 'typhonjs-core-backbone-events@[\\s\\S]+\/src\/TyphonEvents',
+               'backbone~[B|b]ackbone\\.History': 'backbone-es6@[\\s\\S]+\/src\/History',
+               'backbone~[B|b]ackbone\\.Model': 'backbone-parse-es6@[\\s\\S]+\/src\/ParseModel',
+               'backbone~[B|b]ackbone\\.Router': 'backbone-es6@[\\s\\S]+\/src\/Router',
+               'backbone~[B|b]ackbone\\.View': 'backbone-es6@[\\s\\S]+\/src\/View'
+            }
+         }
+      },
+      { name: './src/plugin.js', option: { verbose: false } }
+   ]
 };
 
 fs.emptyDirSync(config.destination);
