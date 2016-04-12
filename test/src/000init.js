@@ -14,6 +14,7 @@ const config =
    plugins:
    [
       { name: 'esdoc-plugin-jspm' },
+/*
       {
          name: 'esdoc-plugin-extends-replace',
          option:
@@ -29,6 +30,7 @@ const config =
             }
          }
       },
+*/
       { name: './src/plugin.js', option: { verbose: false } }
    ]
 };
