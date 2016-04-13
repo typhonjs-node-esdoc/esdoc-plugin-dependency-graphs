@@ -4,7 +4,8 @@
 {
    "build":
    {
-      "babel": { "source": "src", "destination": "dist" }
+//      "babel": { "source": "src", "destination": "dist" }
+      "babel": { "source": "node_modules/esdoc-plugin-jspm/src", "destination": "node_modules/esdoc-plugin-jspm/dist" }
    },
 
    "publish":
