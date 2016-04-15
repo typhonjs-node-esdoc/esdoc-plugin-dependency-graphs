@@ -32,7 +32,9 @@ const config =
       },
 */
       { name: './src/plugin.js', option: { verbose: false } }
-   ]
+   ],
+
+   "manual": { "changelog": ["./CHANGELOG.md"] }
 };
 
 fs.emptyDirSync(config.destination);

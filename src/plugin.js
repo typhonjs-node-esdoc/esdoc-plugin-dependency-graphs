@@ -4,11 +4,16 @@
 
 import fs               from 'fs-extra';
 import path             from 'path';
+import { taffy }        from 'taffydb';
 
 import GraphPackageDep  from './GraphPackageDep.js';
 import GraphSourceDep   from './GraphSourceDep.js';
 
+import GraphDocBuilder  from './GraphDocBuilder.js';
+
 let graphPackageDep, graphSourceDep;
+
+let config, tags;
 
 // ESDoc plugin callbacks -------------------------------------------------------------------------------------------
 
@@ -39,6 +44,8 @@ export function onStart(ev)
  */
 export function onHandleConfig(ev)
 {
+   config = ev.data.config;
+
    graphPackageDep.onHandleConfig(ev);
    graphSourceDep.onHandleConfig(ev);
 }
@@ -51,8 +58,16 @@ export function onHandleConfig(ev)
  */
 export function onHandleHTML(ev)
 {
-//   console.log('!! onHandleHTML - fileName: ' + ev.data.fileName);
-//   console.log('!! onHandleHTML - keys: ' + JSON.stringify(Object.keys(ev.data)));
+   //console.log('!! onHandleHTML - fileName: ' + ev.data.fileName);
+   //console.log('!! onHandleHTML - keys: ' + JSON.stringify(Object.keys(ev.data)));
+}
+
+export function onHandleTag(ev)
+{
+   tags = ev.data.tag;
+//   console.log('!!! onHandleTag - ev.data.tag: ' + JSON.stringify(ev.data.tag));
+
+//
 }
 
 /**
@@ -65,9 +80,21 @@ export function onComplete()
    try
    {
       graphSourceDep.onComplete();
+
+      let data = taffy(tags);
+      new GraphDocBuilder(data, config).exec(s_WRITE_HTML);
+
    } catch (err)
    {
       console.log('!! plugin - onComplete - err: ' + err);
       throw err;
    }
 }
+
+const s_WRITE_HTML = (html, fileName) =>
+{
+//   log(fileName);
+//   html = onHandleHTML(html, fileName);
+   const filePath = path.resolve(config.destination, fileName);
+   fs.outputFileSync(filePath, html, { encoding: 'utf8' });
+};
