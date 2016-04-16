@@ -17,12 +17,11 @@
       currentScope: 'all', // Stores package / source scope: main, dev, all
       maxDepthSticky: true,
       showFullNames: false,
-      showTableView: false,
-      unfreezeOnResize: true
+      showTableView: false
    };
 
    // Stores menu options that have a toggle state.
-   var appMenuToggleOptions = ['maxDepthSticky', 'showFullNames', 'showTableView', 'unfreezeOnResize'];
+   var appMenuToggleOptions = ['maxDepthSticky', 'showFullNames', 'showTableView'];
 
    // Gathers data from template filled functions.
    var dataPackageMap =
@@ -506,10 +505,6 @@
       {
          case 'toggleFreezeAllNodes':
             setNodesFixed(!data.allNodesFixed);
-            break;
-
-         case 'unfreezeOnResize':
-            appOptions.unfreezeOnResize = !appOptions.unfreezeOnResize;
             break;
 
          case 'showFullNames':
