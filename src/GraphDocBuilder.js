@@ -125,7 +125,7 @@ export default class GraphDocBuilder extends DocBuilder
    {
       try
       {
-         const filePath = path.resolve(__dirname, `./template/${fileName}`);
+         const filePath = path.resolve(__dirname, `../template/esdoc/${fileName}`);
          return fs.readFileSync(filePath, { encoding: 'utf-8' });
       }
       catch (err) { /* ... */ }
