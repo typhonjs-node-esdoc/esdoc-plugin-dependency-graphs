@@ -1,10 +1,10 @@
 'use strict';
 
-import cheerio from 'cheerio';
-import fs from 'fs-extra';
-import path from 'path';
+import cheerio    from 'cheerio';
+import fs         from 'fs-extra';
+import path       from 'path';
 
-import IceCap from 'ice-cap';
+import IceCap     from 'ice-cap';
 import DocBuilder from 'esdoc/out/src/Publisher/Builder/DocBuilder.js';
 
 /**
@@ -13,7 +13,44 @@ import DocBuilder from 'esdoc/out/src/Publisher/Builder/DocBuilder.js';
 export default class GraphDocBuilder extends DocBuilder
 {
    /**
-    * execute building output.
+    * Simply wraps the actual graph in an iframe.
+    *
+    * @param {object} item - target graph config item.
+    *
+    * @return {string} built graph.
+    * @private
+    */
+   _buildGraph(item)
+   {
+      return `<iframe src="${item.graphPath}" frameBorder="0" style="display: block; width: 100%; height: 100%;" />`;
+   }
+
+   /**
+    * Creates the left hand navigation list for the various graphs supported.
+    *
+    * @param {Array<{fileName: string, graphPath: string, label: string, safeLabel: string}>}   graphConfig -
+    * target manual config.
+    *
+    * @return {object} IceCap instance
+    * @private
+    */
+   _buildGraphNav(graphConfig)
+   {
+      const ice = new IceCap(this._readTemplate('graphIndex.html'));
+
+      ice.loop('manual', graphConfig, (i, item, ice) =>
+      {
+         ice.attr('manual', 'data-toc-name', item.safeLabel);
+         ice.text('title', item.label);
+         ice.attr('title', 'href', item.fileName);
+      });
+
+      return ice;
+   }
+
+   /**
+    * Execute building output.
+    *
     * @param {function(html: string, filePath: string)} callback - is called each manual.
     */
    exec(callback)
@@ -38,12 +75,12 @@ export default class GraphDocBuilder extends DocBuilder
       // To get the iFrame holding the graph styles to display with no padding and 100% height the following needs
       // to be overridden: 'html', 'body', '.content'. This is a bit of a hack as a new IceCap instance is created.
       const $ = cheerio.load(ice.html);
-      $('html').attr('style', 'height: 100%');
+      $('html').attr('style', 'height: calc(100% - 40px)');
       $('body').attr('style', 'height: 100%');
       $('.content').attr('style', 'padding: 0; height: 100%; position: relative;');
       ice = new IceCap($.html());
 
-      for (let item of graphConfig)
+      for (const item of graphConfig)
       {
          const fileName = item.fileName;
          const baseUrl = this._getBaseUrl(fileName);
@@ -56,7 +93,7 @@ export default class GraphDocBuilder extends DocBuilder
    }
 
    /**
-    * Get graph config based.
+    * Get graph config for all entries for HTML page generation.
     *
     * @returns {Array<{}>} built graph config.
     * @private
@@ -67,76 +104,13 @@ export default class GraphDocBuilder extends DocBuilder
 
       graphConfig.push(
       {
+         fileName: 'graphs/jspm_packages.html',
+         graphPath: 'graphs/jspm_packages/index.html',
          label: 'JSPM Packages',
-         graph_path: 'graphs/jspm_packages/index.html',
-         fileName: 'graphs/jspm_packages.html'
+         safeLabel: 'jspm_packages'
       });
 
       return graphConfig;
-   }
-
-   /**
-    * build manual navigation.
-    * @param {ManualConfigItem[]} graphConfig - target manual config.
-    * @return {IceCap} built navigation
-    * @private
-    */
-   _buildGraphNav(graphConfig)
-   {
-      const ice = new IceCap(this._readTemplate('graphIndex.html'));
-
-      ice.loop('manual', graphConfig, (i, item, ice)=>
-      {
-         const toc = [];
-
-         //const fileName = this._getManualOutputFileName(item);
-         //const html = this._convertMDToHTML(item);
-         //const $root = cheerio.load(html).root();
-         //const isHRise = $root.find('h1').length === 0;
-         //
-         //$root.find('h1,h2,h3,h4,h5').each((i, el)=>
-         //{
-         //   const $el = cheerio(el);
-         //   const label = $el.text();
-         //   const link = `${fileName}#${$el.attr('id')}`;
-         //   let indent;
-         //   if (isHRise)
-         //   {
-         //      const tagName = `h${parseInt(el.tagName.charAt(1), 10) - 1}`;
-         //      indent = `indent-${tagName}`;
-         //   }
-         //   else
-         //   {
-         //      indent = `indent-${el.tagName.toLowerCase()}`;
-         //   }
-         //   toc.push({label, link, indent});
-         //});
-
-         ice.attr('manual', 'data-toc-name', item.label.toLowerCase());
-         ice.text('title', item.label);
-         ice.attr('title', 'href', item.fileName);
-         ice.loop('manualNav', toc, (i, item, ice)=>
-         {
-            ice.attr('manualNav', 'class', item.indent);
-            ice.text('link', item.label);
-            ice.attr('link', 'href', item.link);
-         });
-      });
-
-      return ice;
-   }
-
-   /**
-    * build manual navigation.
-    * @param {ManualConfigItem[]} graphConfig - target manual config.
-    * @return {IceCap} built navigation
-    * @private
-    */
-   _removeFooter(ice)
-   {
-      const $ = cheerio.load(ice.html);
-      $('.footer').remove();
-      return $.html();
    }
 
    /**
@@ -160,15 +134,17 @@ export default class GraphDocBuilder extends DocBuilder
    }
 
    /**
-    * Simply wraps the actual graph in an iframe.
+    * Removes the footer from ESDoc layout template which is useful for full screen graphs.
     *
-    * @param {object} item - target graph config item.
+    * @param {object} ice - An instance of IceCap
     *
-    * @return {string} built graph.
+    * @return {string}
     * @private
     */
-   _buildGraph(item)
+   _removeFooter(ice)
    {
-      return `<iframe src="${item.graph_path}" frameBorder="0" style="display: block; width: 100%; height: 100%" />`;
+      const $ = cheerio.load(ice.html);
+      $('.footer').remove();
+      return $.html();
    }
 }

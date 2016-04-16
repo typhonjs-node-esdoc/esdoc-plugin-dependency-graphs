@@ -1,7 +1,10 @@
 /**
- * esdoc-plugin-jspm-dependency-graph -- In development / creates a package dependency graph w/ D3 for JSPM / SystemJS
+ * esdoc-plugin-jspm-dependency-graph -- In development / creates a package dependency graph w/ D3 for JSPM / SystemJS.
  */
 
+'use strict';
+
+import cheerio          from 'cheerio';
 import fs               from 'fs-extra';
 import path             from 'path';
 import { taffy }        from 'taffydb';
@@ -11,14 +14,16 @@ import GraphSourceDep   from './GraphSourceDep.js';
 
 import GraphDocBuilder  from './GraphDocBuilder.js';
 
+// Stores instances of GraphPackageDep and GraphSourceDep which generates the graphs.
 let graphPackageDep, graphSourceDep;
 
+// Must store ESDoc configuration file and tags to use later with GraphDocBuilder.
 let config, tags;
 
 // ESDoc plugin callbacks -------------------------------------------------------------------------------------------
 
 /**
- * onStart
+ * Sanitizes optional parameters and initializes the graph generators.
  *
  * @param {object}   ev - Event from ESDoc containing data field.
  */
@@ -35,10 +40,7 @@ export function onStart(ev)
 }
 
 /**
- * Prepares additional config parameters for ESDoc. An all inclusive source root of "." is supplied, so an
- * "includes" array is constructed with all source roots for the local project and all associated jspm packages.
- *
- * Also all RegExp instances are created and stored for later usage.
+ * Stores the ESDoc configuration file for later use with GraphDocBuilder and starts the graph generators.
  *
  * @param {object}   ev - Event from ESDoc containing data field.
  */
@@ -51,27 +53,32 @@ export function onHandleConfig(ev)
 }
 
 /**
- * The generated HTML also includes the full JSPM path, so various RegExp substitutions are run to transform the
- * full paths to the normalized JSPM package paths.
+ * Process all HTML files adding a `Graphs` link to the top header navigation bar.
  *
  * @param {object}   ev - Event from ESDoc containing data field
  */
 export function onHandleHTML(ev)
 {
-   //console.log('!! onHandleHTML - fileName: ' + ev.data.fileName);
-   //console.log('!! onHandleHTML - keys: ' + JSON.stringify(Object.keys(ev.data)));
-}
-
-export function onHandleTag(ev)
-{
-   tags = ev.data.tag;
-//   console.log('!!! onHandleTag - ev.data.tag: ' + JSON.stringify(ev.data.tag));
-
-//
+   if (ev.data.fileName.endsWith('.html'))
+   {
+      const $ = cheerio.load(ev.data.html, { decodeEntities: false });
+      $('<a href="graphs/jspm_packages.html">Graphs</a>').insertAfter('a[href="identifiers.html"]');
+      ev.data.html = $.html();
+   }
 }
 
 /**
- * The search data file must have JSPM package paths replaced with normalized versions.
+ * Must save tags to eventually feed GraphDocBuilder with taffydb converted data.
+ *
+ * @param {object}   ev - Event from ESDoc containing data field
+ */
+export function onHandleTag(ev)
+{
+   tags = ev.data.tag;
+}
+
+/**
+ * Completes graph generation and then builds the HTML index pages.
  */
 export function onComplete()
 {
@@ -81,20 +88,28 @@ export function onComplete()
    {
       graphSourceDep.onComplete();
 
-      let data = taffy(tags);
-      new GraphDocBuilder(data, config).exec(s_WRITE_HTML);
-
-   } catch (err)
+      new GraphDocBuilder(taffy(tags), config).exec(s_WRITE_HTML);
+   }
+   catch (err)
    {
-      console.log('!! plugin - onComplete - err: ' + err);
+      console.log(`!! plugin - onComplete - err: ${err}`);
       throw err;
    }
 }
 
+/**
+ * Provides a callback for GraphDocBuilder to export HTML files delegating to the local `onHandleHTML` function.
+ *
+ * @param {string}   html - HTML to save.
+ * @param {string}   fileName - name for file output.
+ */
 const s_WRITE_HTML = (html, fileName) =>
 {
-//   log(fileName);
-//   html = onHandleHTML(html, fileName);
+   // Must match plugin event data format.
+   const ev = { data: { html, fileName } };
+
+   onHandleHTML(ev);
+
    const filePath = path.resolve(config.destination, fileName);
-   fs.outputFileSync(filePath, html, { encoding: 'utf8' });
+   fs.outputFileSync(filePath, ev.data.html, { encoding: 'utf8' });
 };
