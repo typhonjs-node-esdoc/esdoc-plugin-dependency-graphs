@@ -14,13 +14,11 @@ import GraphSourceDep   from './GraphSourceDep.js';
 
 import GraphDocBuilder  from './GraphDocBuilder.js';
 
-import JSPMNavDocBuilder from './JSPMNavDocBuilder.js';
-
 // Stores instances of GraphPackageDep and GraphSourceDep which generates the graphs.
 let graphPackageDep, graphSourceDep;
 
 // Must store ESDoc configuration file and tags to use later with GraphDocBuilder.
-let config, navHTML, tags;
+let config, tags;
 
 // ESDoc plugin callbacks -------------------------------------------------------------------------------------------
 
@@ -64,10 +62,8 @@ export function onHandleHTML(ev)
    if (ev.data.fileName.endsWith('.html'))
    {
       const $ = cheerio.load(ev.data.html, { decodeEntities: false });
-      $('<a href="graphs/jspm_packages.html">Graphs</a>').insertAfter('header a[href="identifiers.html"]');
 
-      // Replace standard navigation with JSPM navigation.
-      if ($('.navigation').find('.nav-dir-path').length > 0) { $('.navigation').html('Hello!<br>' + navHTML); }
+      $('<a href="graphs/jspm_packages.html">Graphs</a>').insertAfter('header a[href="identifiers.html"]');
 
       ev.data.html = $.html();
    }
@@ -81,8 +77,6 @@ export function onHandleHTML(ev)
 export function onHandleTag(ev)
 {
    tags = ev.data.tag;
-
-   navHTML = new JSPMNavDocBuilder(taffy(tags), config).buildNavDoc();
 }
 
 /**
