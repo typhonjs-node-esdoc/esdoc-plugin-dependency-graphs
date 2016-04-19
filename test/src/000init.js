@@ -14,6 +14,7 @@ const config =
    plugins:
    [
       { name: 'esdoc-plugin-jspm' },
+      { name: 'esdoc-plugin-enhanced-navigation' },
 /*
       {
          name: 'esdoc-plugin-extends-replace',

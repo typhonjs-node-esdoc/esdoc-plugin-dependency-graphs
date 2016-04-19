@@ -31,7 +31,8 @@
     "npm": ">=3.x"
   },
   "scripts": {
-    "build": "babel-node ./node_modules/typhonjs-npm-scripts-build-babel/scripts/build.js",
+    "build-esdoc-jspm": "babel-node ./node_modules/typhonjs-npm-scripts-build-babel/scripts/build.js",
+    "build-enhanced-nav": "babel ./node_modules/esdoc-plugin-enhanced-navigation/src -d ./node_modules/esdoc-plugin-enhanced-navigation/dist",
     "esdoc": "esdoc -c .esdocrc",
     "eslint": "eslint .",
     "prepublish": "babel-node ./node_modules/typhonjs-npm-scripts-publish/scripts/prepublish.js",
