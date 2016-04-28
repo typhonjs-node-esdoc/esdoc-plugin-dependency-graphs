@@ -607,7 +607,7 @@
     * Shows the node context menu
     *
     * @param {object}   targetNode - The target node.
-
+    *
     * @param {object}   coords - Object containing x / y position for context menu; if not provided Node position
     *                            determines coords.
     */

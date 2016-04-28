@@ -13,7 +13,7 @@ const config =
    destination: './test/fixture/docs',
    plugins:
    [
-      { name: 'esdoc-plugin-jspm' },
+      { name: 'esdoc-plugin-jspm', option: { silent: true } },
       { name: 'esdoc-plugin-enhanced-navigation' },
 /*
       {

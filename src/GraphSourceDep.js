@@ -42,10 +42,8 @@ export default class GraphSourceDep
 
    onComplete()
    {
-      const parsedFiles = s_PARSE_AST_FILES(s_PARSE_FILE_LIST(s_READDIR_TRAVERSE(astPath)));
-
-      console.log('!! GSP - onComplete - parsedFiles: ' + JSON.stringify(parsedFiles));
-
+//      const parsedFiles = s_PARSE_AST_FILES(s_PARSE_FILE_LIST(s_READDIR_TRAVERSE(astPath)));
+//      console.log('!! GSP - onComplete - parsedFiles: ' + JSON.stringify(parsedFiles));
    }
 }
 
@@ -198,7 +196,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
 
       if (typeof jspmPackageMap[key] === 'undefined' && typeof jspmDevPackageMap[key] === 'undefined')
       {
-         throw new Error(`esdoc-plugin-jspm-dependency-graph: unknown top level package: ${key}`);
+         throw new Error(`esdoc-plugin-dependency-graphs: unknown top level package: ${key}`);
       }
 
       let index = packageNodesAll.length;
@@ -209,7 +207,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
          if (options.verbose)
          {
             console.log(
-             `esdoc-plugin-jspm-dependency-graph: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (all) node: `
+             `esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (all) node: `
              + `${JSON.stringify(object)}`);
          }
          packageNodesAll.push(object);
@@ -225,7 +223,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
          {
             if (options.verbose)
             {
-               console.log('esdoc-plugin-jspm-dependency-graph: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (dev) node: ' + JSON.stringify(object));
+               console.log('esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (dev) node: ' + JSON.stringify(object));
             }
 
             packageNodesMain.push(object);
@@ -242,7 +240,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
          {
             if (options.verbose)
             {
-               console.log('esdoc-plugin-jspm-dependency-graph: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (main) node: ' + JSON.stringify(object));
+               console.log('esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (main) node: ' + JSON.stringify(object));
             }
 
             packageNodesDev.push(object);
@@ -254,7 +252,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
    if (options.verbose)
    {
       console.log(
-       'esdoc-plugin-jspm-dependency-graph: s_CREATE_GRAPH_JSPM_PACKAGES --- parsing top level all dependencies');
+       'esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES --- parsing top level all dependencies');
    }
 
    // Recursively parse all dependencies
@@ -264,7 +262,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
    if (options.verbose)
    {
       console.log(
-       'esdoc-plugin-jspm-dependency-graph: s_CREATE_GRAPH_JSPM_PACKAGES --- parsing top level dev dependencies');
+       'esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES --- parsing top level dev dependencies');
    }
 
    // Recursively parse dev dependencies
@@ -274,7 +272,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
    if (options.verbose)
    {
       console.log(
-       'esdoc-plugin-jspm-dependency-graph: s_CREATE_GRAPH_JSPM_PACKAGES --- parsing top level main dependencies');
+       'esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES --- parsing top level main dependencies');
    }
 
    // Recursively parse main dependencies
@@ -358,7 +356,7 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
 
       if (options.verbose)
       {
-         console.log(`esdoc-plugin-jspm-dependency-graph: s_DEPTH_TRAVERSAL_NODES - depth: ${depth}; packageDep.index: `
+         console.log(`esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ${depth}; packageDep.index: `
           + `${packageDep.index}; dep: ${JSON.stringify(packageDep)}`);
       }
 
@@ -390,7 +388,7 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
 
             if (options.verbose)
             {
-               console.log('esdoc-plugin-jspm-dependency-graph: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; adding node: ' + JSON.stringify(newNode));
+               console.log('esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; adding node: ' + JSON.stringify(newNode));
             }
 
             packageNodes.push(newNode);
@@ -409,7 +407,7 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
 
                if (options.verbose)
                {
-                  console.log('esdoc-plugin-jspm-dependency-graph: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; updating min level: ' + JSON.stringify(existingNode));
+                  console.log('esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; updating min level: ' + JSON.stringify(existingNode));
                }
             }
 
@@ -422,7 +420,7 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
    {
       if (options.verbose)
       {
-         console.log('esdoc-plugin-jspm-dependency-graph: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; nextLevelPackages: ' + JSON.stringify(nextLevelPackages));
+         console.log('esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; nextLevelPackages: ' + JSON.stringify(nextLevelPackages));
       }
 
       s_DEPTH_TRAVERSAL_NODES(nextLevelPackages, packageNodes, packageNodeMap, packageLinks, packageLinkMap,

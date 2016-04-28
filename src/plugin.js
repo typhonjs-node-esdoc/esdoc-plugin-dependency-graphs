@@ -1,5 +1,5 @@
 /**
- * esdoc-plugin-jspm-dependency-graph -- In development / creates a package dependency graph w/ D3 for JSPM / SystemJS.
+ * esdoc-plugin-dependency-graphs -- In development / creates a package dependency graph w/ D3 for JSPM / SystemJS.
  */
 
 'use strict';
