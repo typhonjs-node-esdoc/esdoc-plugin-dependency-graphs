@@ -9,6 +9,8 @@ import fs               from 'fs-extra';
 import path             from 'path';
 import { taffy }        from 'taffydb';
 
+import packageParser    from './packageParser.js';
+
 import GraphPackageDep  from './GraphPackageDep.js';
 import GraphSourceDep   from './GraphSourceDep.js';
 
@@ -18,7 +20,7 @@ import GraphDocBuilder  from './GraphDocBuilder.js';
 let graphPackageDep, graphSourceDep;
 
 // Must store ESDoc configuration file and tags to use later with GraphDocBuilder.
-let config, tags;
+let config, options, tags;
 
 // ESDoc plugin callbacks -------------------------------------------------------------------------------------------
 
@@ -30,7 +32,7 @@ let config, tags;
 export function onStart(ev)
 {
    // Stores sanitized option map.
-   const options = typeof ev.data.option === 'object' ? ev.data.option : {};
+   options = typeof ev.data.option === 'object' ? ev.data.option : {};
 
    // Stores option that if true silences logging output.
    options.verbose = typeof options.verbose === 'boolean' ? options.verbose : false;
@@ -47,6 +49,8 @@ export function onStart(ev)
 export function onHandleConfig(ev)
 {
    config = ev.data.config;
+
+   packageParser(config, options);
 
    graphPackageDep.onHandleConfig(ev);
    graphSourceDep.onHandleConfig(ev);

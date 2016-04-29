@@ -1,32 +1,9 @@
-import fs         from 'fs-extra';
-import path       from 'path';
-import _          from 'underscore';
-
-import JSPMParser from 'typhonjs-config-jspm-parse';
-
-import jspm       from 'jspm';   // Note: this could be dangerous for NPM < 3.0.
-
-let packagePath = './package.json';
+import fs            from 'fs-extra';
+import path          from 'path';
+import _             from 'underscore';
 
 // Stores the path to generated graphs.
 let docGraphPath;
-
-// Stores the root package name.
-let rootPackageName;
-
-// Stores values from `jspm.dependencies` from `package.json`.
-let jspmPackageMap;
-
-// Stores values from `jspm.devDependencies` from `package.json`.
-let jspmDevPackageMap;
-
-let uniqueDeps;
-let uniqueDevDeps;
-let uniqueSharedDep;
-let uniqueDepsAll;
-
-let childPackageMap;
-let topLevelPackages;
 
 const packageLinksAll = [];
 const packageLinksDev = [];
@@ -53,59 +30,7 @@ export default class GraphPackageDep
 
    onHandleConfig(ev)
    {
-      if (ev.data.config.package)
-      {
-         packagePath = ev.data.config.package;
-      }
-
       docGraphPath = `${ev.data.config.destination}${path.sep}graphs${path.sep}`;
-
-      // Get package.json as ESDoc will prepend the name of the module found in the package.json
-      try
-      {
-         const packageJSON = fs.readFileSync(packagePath, 'utf-8');
-         const packageObj = JSON.parse(packageJSON);
-
-         rootPackageName = packageObj.name;
-
-         jspmPackageMap = JSPMParser.getPackageJSPMDependencies(packageObj, jspmPackageMap, !this.options.verbose,
-          'esdoc-plugin-dependency-graphs');
-
-         jspmDevPackageMap = JSPMParser.getPackageJSPMDevDependencies(packageObj, jspmDevPackageMap,
-          !this.options.verbose, 'esdoc-plugin-dependency-graphs');
-      }
-      catch (err)
-      {
-         throw new Error(`Could not locate 'package.json' in package path '${packagePath}'.`);
-      }
-
-      // Filter package maps so that they only include NPM / GitHub packages.
-      jspmPackageMap = s_FILTER_PACKAGE_MAP(jspmPackageMap);
-      jspmDevPackageMap = s_FILTER_PACKAGE_MAP(jspmDevPackageMap);
-
-      const rootPath = ev.data.config.hasOwnProperty('jspmRootPath') ? ev.data.config.jspmRootPath :
-       JSPMParser.getRootPath();
-
-      // ESDoc uses the root directory name if no package.json with a package name exists.
-      const rootDir = rootPath.split(path.sep).pop();
-
-      rootPackageName = rootPackageName || rootDir;
-
-      // Set the package path to the local root where config.js is located.
-      jspm.setPackagePath(rootPath);
-
-      // Create SystemJS Loader
-      const System = new jspm.Loader();
-
-      const packageResolver = JSPMParser.getPackageResolver(System);
-
-      uniqueDeps = packageResolver.getUniqueDependencyList(Object.keys(jspmPackageMap));
-      uniqueDevDeps = packageResolver.getUniqueDependencyList(Object.keys(jspmDevPackageMap));
-      uniqueSharedDep = _.intersection(uniqueDeps, uniqueDevDeps);
-      uniqueDepsAll = packageResolver.getUniqueDependencyList();
-
-      topLevelPackages = s_FILTER_PACKAGE_MAP(packageResolver.topLevelPackages);
-      childPackageMap = packageResolver.childPackageMap;
    }
 
    /**
@@ -119,6 +44,8 @@ export default class GraphPackageDep
 
 const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
 {
+   const { jspmDevPackageMap, jspmPackageMap, rootPackageName, topLevelPackages } = global['$$esdoc_plugin_jspm'];
+
    const docGraphPackagePath = `${docGraphPath}jspm_packages${path.sep}`;
 
    // Ensure graphs directory exists.
@@ -293,6 +220,8 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
 const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, packageLinks, packageLinkMap, packageScope,
  depth, options) =>
 {
+   const { childPackageMap } = global['$$esdoc_plugin_jspm'];
+
    const nextLevelPackages = [];
 
    for (let cntr = 0; cntr < packageDeps.length; cntr++)
@@ -371,24 +300,6 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
       s_DEPTH_TRAVERSAL_NODES(nextLevelPackages, packageNodes, packageNodeMap, packageLinks, packageLinkMap,
        packageScope, depth + 1, options);
    }
-};
-
-/**
- * Filters a package map copying over to output only NPM or GitHub packages.
- *
- * @param {object}   packageMap - Package map to filter.
- * @param {object}   output - An optional output map.
- * @returns {{}}
- */
-const s_FILTER_PACKAGE_MAP = (packageMap, output = {}) =>
-{
-   for (const key in packageMap)
-   {
-      const value = packageMap[key];
-      if (value.startsWith('npm:') || value.startsWith('github:')) { output[key] = value; }
-   }
-
-   return output;
 };
 
 const s_PARSE_PACKAGE = (value, key) =>
