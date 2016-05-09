@@ -4,8 +4,8 @@
 {
    "build":
    {
-//      "babel": { "source": "src", "destination": "dist" }
-      "babel": { "source": "node_modules/esdoc-plugin-jspm/src", "destination": "node_modules/esdoc-plugin-jspm/dist" }
+      "babel": { "source": "src", "destination": "dist" }
+//      "babel": { "source": "node_modules/esdoc-plugin-jspm/src", "destination": "node_modules/esdoc-plugin-jspm/dist" }
    },
 
    "publish":
@@ -18,7 +18,7 @@
       // Provides a `coverage` handling command that is appended when running on Travis CI.
       "travis":
       {
-         "coverage": "&& cat ./coverage/lcov.info | ./node_modules/codecov.io/bin/codecov.io.js",
+         "report": "cat ./coverage/lcov.info | ./node_modules/codecov.io/bin/codecov.io.js",
          "istanbul": { "command": "cover", "options": ["--report lcovonly"] }
       },
 

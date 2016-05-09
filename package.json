@@ -1,15 +1,15 @@
 {
-  "name": "esdoc-plugin-jspm-dependency-graph",
+  "name": "esdoc-plugin-dependency-graphs",
   "version": "0.0.1",
-  "homepage": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm-dependency-graph/",
-  "description": "A plugin for ESDoc that enables end to end documentation linking JSPM / SystemJS managed packages creating package dependency graphs w/ D3.",
+  "homepage": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs/",
+  "description": "A plugin for ESDoc that adds interactive D3 powered dependency graphs for source code including linking JSPM / NPM managed code and packages.",
   "license": "MPL-2.0",
   "author": {
     "name": "Mike Leahy"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm-dependency-graph/esdoc-plugin-jspm-dependency-graph.git"
+    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs.git"
   },
   "maintainers": [
     {
@@ -18,9 +18,8 @@
     }
   ],
   "dependencies": {
-    "fs-extra": "^0.26.0",
-    "typhonjs-config-jspm-parse": "^0.5.0",
-    "underscore": "^1.8.3"
+    "fs-extra": "^0.30.0",
+    "underscore": "^1.8.0"
   },
   "devDependencies": {
     "jspm": "^0.16.0",
@@ -32,7 +31,6 @@
   },
   "scripts": {
     "build-esdoc-jspm": "babel-node ./node_modules/typhonjs-npm-scripts-build-babel/scripts/build.js",
-    "build-enhanced-nav": "babel ./node_modules/esdoc-plugin-enhanced-navigation/src -d ./node_modules/esdoc-plugin-enhanced-navigation/dist",
     "esdoc": "esdoc -c .esdocrc",
     "eslint": "eslint .",
     "prepublish": "babel-node ./node_modules/typhonjs-npm-scripts-publish/scripts/prepublish.js",
@@ -45,9 +43,9 @@
       "backbone": "github:typhonjs-backbone-parse/backbone-parse-es6@master"
     },
     "devDependencies": {
-      "babel": "npm:babel-core@^5.8.35",
-      "babel-runtime": "npm:babel-runtime@^5.8.35",
-      "core-js": "npm:core-js@^1.2.6"
+      "babel": "npm:babel-core@^5.8.0",
+      "babel-runtime": "npm:babel-runtime@^5.8.0",
+      "core-js": "npm:core-js@^1.2.0"
     }
   },
   "typhonjs": {
@@ -79,6 +77,6 @@
   ],
   "directories": {},
   "bugs": {
-    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm-dependency-graph/issues"
+    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs/issues"
   }
 }

@@ -40,20 +40,20 @@ g.dimmed text.shadow {
 circle {
    fill: #ccc;
    stroke: #333;
-   stroke-width: 1.5px;
+   stroke-width: 2px;
    cursor: hand;
 }
 
 circle.npm {
-   fill: #ff00ff;
+   fill: rgb(237,151,158);
 }
 
 circle.github {
-   fill: #00ff00;
+   fill: rgb(255,210,87);
 }
 
 circle.selected {
-   fill: #b94431;
+   fill: #00ff00;
 }
 
 text {

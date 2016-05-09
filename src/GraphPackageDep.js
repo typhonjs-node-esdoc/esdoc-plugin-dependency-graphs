@@ -95,7 +95,9 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
          {
             if (options.verbose)
             {
-               console.log('esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (dev) node: ' + JSON.stringify(object));
+               console.log(
+                `esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (dev) node: `
+                 + `${JSON.stringify(object)}`);
             }
 
             packageNodesMain.push(object);
@@ -112,7 +114,9 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
          {
             if (options.verbose)
             {
-               console.log('esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (main) node: ' + JSON.stringify(object));
+               console.log(
+                `esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES - adding top level (main) node: `
+                + `${JSON.stringify(object)}`);
             }
 
             packageNodesDev.push(object);
@@ -211,12 +215,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
    fs.writeFileSync(`${docGraphPackagePath}index.html`, _.template(indexHTML)(data));
 };
 
-/**
- * Provides a recursive function traversing package dependencies.
- *
- * @param {Array<string>}  packageDeps - Array of packages to traverse.
- * @param {number}         depth - Current category depth.
- */
+ // Provides a recursive function traversing package dependencies.
 const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, packageLinks, packageLinkMap, packageScope,
  depth, options) =>
 {
@@ -234,7 +233,7 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
           + `${packageDep.index}; dep: ${JSON.stringify(packageDep)}`);
       }
 
-      const childDepMap = childPackageMap[packageDep.packageData.package];
+      const childDepMap = childPackageMap[packageDep.packageData.fullPackage];
 
       if (typeof childDepMap === 'undefined')
       {
@@ -262,7 +261,9 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
 
             if (options.verbose)
             {
-               console.log('esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; adding node: ' + JSON.stringify(newNode));
+               console.log(
+                `esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; adding node: `
+                 + `${JSON.stringify(newNode)}`);
             }
 
             packageNodes.push(newNode);
@@ -281,7 +282,9 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
 
                if (options.verbose)
                {
-                  console.log('esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; updating min level: ' + JSON.stringify(existingNode));
+                  console.log(
+                   `esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ${depth}; updating min level: `
+                    + `${JSON.stringify(existingNode)}`);
                }
             }
 
@@ -294,7 +297,8 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
    {
       if (options.verbose)
       {
-         console.log('esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ' + depth + '; nextLevelPackages: ' + JSON.stringify(nextLevelPackages));
+         console.log(`esdoc-plugin-dependency-graphs: s_DEPTH_TRAVERSAL_NODES - depth: ${depth}; nextLevelPackages: `
+          + `${JSON.stringify(nextLevelPackages)}`);
       }
 
       s_DEPTH_TRAVERSAL_NODES(nextLevelPackages, packageNodes, packageNodeMap, packageLinks, packageLinkMap,
@@ -311,8 +315,8 @@ const s_PARSE_PACKAGE = (value, key) =>
       type: values[1],
       name: values[2],
       fullName: values[2],
+      fullPackage: value,
       version: values[3],
-      package: value,
       isAliased: false
    };
 
@@ -348,8 +352,7 @@ const s_PARSE_PACKAGE = (value, key) =>
 /**
  * Replaces semver and other special characters with `-`.
  *
- * @param {string}   prefix - String prefix.
- * @param {object}   object - Node object
+ * @param {string}   value - Value to sanitize.
  * @returns {string}
  */
 const s_SANITIZE_CSS = (value) =>

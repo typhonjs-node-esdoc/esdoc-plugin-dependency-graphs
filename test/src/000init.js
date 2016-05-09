@@ -14,8 +14,6 @@ const config =
    plugins:
    [
       { name: 'esdoc-plugin-jspm', option: { silent: true } },
-      { name: 'esdoc-plugin-enhanced-navigation' },
-/*
       {
          name: 'esdoc-plugin-extends-replace',
          option:
@@ -31,11 +29,10 @@ const config =
             }
          }
       },
-*/
       { name: './src/plugin.js', option: { verbose: false } }
    ],
 
-   "manual": { "changelog": ["./CHANGELOG.md"] }
+   manual: { changelog: ['./CHANGELOG.md'] }
 };
 
 fs.emptyDirSync(config.destination);

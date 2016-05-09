@@ -9,15 +9,13 @@ import fs               from 'fs-extra';
 import path             from 'path';
 import { taffy }        from 'taffydb';
 
-import packageParser    from './packageParser.js';
-
 import GraphPackageDep  from './GraphPackageDep.js';
-import GraphSourceDep   from './GraphSourceDep.js';
+// import GraphSourceDep   from './GraphSourceDep.js';
 
 import GraphDocBuilder  from './GraphDocBuilder.js';
 
 // Stores instances of GraphPackageDep and GraphSourceDep which generates the graphs.
-let graphPackageDep, graphSourceDep;
+let graphPackageDep; // , graphSourceDep;
 
 // Must store ESDoc configuration file and tags to use later with GraphDocBuilder.
 let config, options, tags;
@@ -38,7 +36,7 @@ export function onStart(ev)
    options.verbose = typeof options.verbose === 'boolean' ? options.verbose : false;
 
    graphPackageDep = new GraphPackageDep(options);
-   graphSourceDep = new GraphSourceDep(options);
+//   graphSourceDep = new GraphSourceDep(options);
 }
 
 /**
@@ -50,10 +48,8 @@ export function onHandleConfig(ev)
 {
    config = ev.data.config;
 
-   packageParser(config, options);
-
    graphPackageDep.onHandleConfig(ev);
-   graphSourceDep.onHandleConfig(ev);
+//   graphSourceDep.onHandleConfig(ev);
 }
 
 /**
@@ -92,7 +88,7 @@ export function onComplete()
 
    try
    {
-      graphSourceDep.onComplete();
+//      graphSourceDep.onComplete();
 
       new GraphDocBuilder(taffy(tags), config).exec(s_WRITE_HTML);
    }

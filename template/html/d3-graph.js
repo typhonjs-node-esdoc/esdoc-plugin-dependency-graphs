@@ -1,7 +1,8 @@
+/* eslint-disable */
+
 (function()
 {
    'use strict';
-   /* eslint-disable */
 
    var circleRadius = 6;
    var minScaleExtent = 0.2, maxScaleExtent = 5;
