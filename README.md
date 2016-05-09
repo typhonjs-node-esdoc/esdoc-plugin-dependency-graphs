@@ -1,12 +1,12 @@
 ![esdoc-plugin-dependency-graphs](https://i.imgur.com/2aVv3Q2.png)
 
-[![NPM](https://img.shields.io/npm/v/esdoc-plugin-enhanced-navigation.svg?label=npm)](https://www.npmjs.com/package/esdoc-plugin-enhanced-navigation)
+[![NPM](https://img.shields.io/npm/v/esdoc-plugin-dependency-graphs.svg?label=npm)](https://www.npmjs.com/package/esdoc-plugin-dependency-graphs)
 [![Code Style](https://img.shields.io/badge/code%20style-allman-yellowgreen.svg?style=flat)](https://en.wikipedia.org/wiki/Indent_style#Allman_style)
-[![License](https://img.shields.io/badge/license-MPLv2-yellowgreen.svg?style=flat)](https://github.com/typhonjs-node-esdoc/esdoc-plugin-enhanced-navigation/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/license-MPLv2-yellowgreen.svg?style=flat)](https://github.com/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs/blob/master/LICENSE)
 [![Gitter](https://img.shields.io/gitter/room/typhonjs/TyphonJS.svg)](https://gitter.im/typhonjs/TyphonJS)
 
-[![Build Status](https://travis-ci.org/typhonjs-node-esdoc/esdoc-plugin-enhanced-navigation.svg?branch=master)](https://travis-ci.org/typhonjs-node-esdoc/esdoc-plugin-enhanced-navigation)
-[![Coverage](https://img.shields.io/codecov/c/github/typhonjs-node-esdoc/esdoc-plugin-enhanced-navigation.svg)](https://codecov.io/github/typhonjs-node-esdoc/esdoc-plugin-enhanced-navigation)
+[![Build Status](https://travis-ci.org/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs.svg?branch=master)](https://travis-ci.org/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs)
+[![Coverage](https://img.shields.io/codecov/c/github/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs.svg)](https://codecov.io/github/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs)
 [![Dependency Status](https://www.versioneye.com/user/projects/5727e02aa0ca350034be631d/badge.svg?style=flat)](https://www.versioneye.com/user/projects/5727e02aa0ca350034be631d)
 
 A plugin for [ESDoc](https://esdoc.org) that adds [D3](https://d3js.org/) interactive dependency graphs for packages and source code managed by JSPM / SystemJS and soon NPM. A context menu is available that opens associated Github / NPM links.
