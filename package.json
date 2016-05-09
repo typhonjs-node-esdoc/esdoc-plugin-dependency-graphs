@@ -30,7 +30,7 @@
     "npm": ">=3.x"
   },
   "scripts": {
-    "build-esdoc-jspm": "babel-node ./node_modules/typhonjs-npm-scripts-build-babel/scripts/build.js",
+    "build": "babel-node ./node_modules/typhonjs-npm-scripts-build-babel/scripts/build.js",
     "esdoc": "esdoc -c .esdocrc",
     "eslint": "eslint .",
     "prepublish": "babel-node ./node_modules/typhonjs-npm-scripts-publish/scripts/prepublish.js",
@@ -73,6 +73,7 @@
   "files": [
     "dist",
     "src",
+    "template",
     "AUTHORS.md"
   ],
   "directories": {},
