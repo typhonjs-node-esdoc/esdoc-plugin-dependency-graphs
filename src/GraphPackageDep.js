@@ -51,10 +51,10 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
    // Ensure graphs directory exists.
    fs.ensureDirSync(docGraphPackagePath);
 
-   const d3Graph = fs.readFileSync('./template/html/d3-graph.js', 'utf8');
-   const styleCSS = fs.readFileSync('./template/html/style.css', 'utf8');
-   const indexHTML = fs.readFileSync('./template/html/index.html', 'utf8');
-   const tableSorter = fs.readFileSync('./template/html/jquery-tablesorter.js', 'utf8');
+   const d3Graph = fs.readFileSync(path.resolve(__dirname, '../template/html/d3-graph.js'), 'utf8');
+   const styleCSS = fs.readFileSync(path.resolve(__dirname, '../template/html/style.css'), 'utf8');
+   const indexHTML = fs.readFileSync(path.resolve(__dirname, '../template/html/index.html'), 'utf8');
+   const tableSorter = fs.readFileSync(path.resolve(__dirname, '../template/html/jquery-tablesorter.js'), 'utf8');
 
    // Parse top level packages
    for (const key in topLevelPackages)
