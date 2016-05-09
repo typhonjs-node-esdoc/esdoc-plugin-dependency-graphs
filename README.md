@@ -39,7 +39,7 @@ If installing and working directly with `esdoc-plugin-dependency-graphs` the fol
 
   "devDependencies": {
     "esdoc": "^0.4.0",
-    "esdoc-plugin-dependency-graphs": "^0.0.1",  
+    "esdoc-plugin-dependency-graphs": "^0.0.3",  
     "esdoc-plugin-jspm": "^0.6.0", 
     "jspm": "^0.16.0"
   },
