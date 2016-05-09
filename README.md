@@ -7,7 +7,7 @@
 
 [![Build Status](https://travis-ci.org/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs.svg?branch=master)](https://travis-ci.org/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs)
 [![Coverage](https://img.shields.io/codecov/c/github/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs.svg)](https://codecov.io/github/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs)
-[![Dependency Status](https://www.versioneye.com/user/projects/5727e02aa0ca350034be631d/badge.svg?style=flat)](https://www.versioneye.com/user/projects/5727e02aa0ca350034be631d)
+[![Dependency Status](https://www.versioneye.com/user/projects/57301f87a0ca350034be70ec/badge.svg?style=flat)](https://www.versioneye.com/user/projects/57301f87a0ca350034be70ec)
 
 A plugin for [ESDoc](https://esdoc.org) that adds [D3](https://d3js.org/) interactive dependency graphs for packages and source code managed by JSPM / SystemJS and soon NPM. A context menu is available that opens associated Github / NPM links.
 
