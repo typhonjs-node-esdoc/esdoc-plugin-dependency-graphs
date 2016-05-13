@@ -9,10 +9,6 @@ const packageLinksAll = [];
 const packageLinksDev = [];
 const packageLinksMain = [];
 
-const packageLinkMapAll = new Map();
-const packageLinkMapDev = new Map();
-const packageLinkMapMain = new Map();
-
 const packageNodesAll = [];
 const packageNodesDev = [];
 const packageNodesMain = [];
@@ -56,6 +52,40 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
    const indexHTML = fs.readFileSync(path.resolve(__dirname, '../template/html/index.html'), 'utf8');
    const tableSorter = fs.readFileSync(path.resolve(__dirname, '../template/html/jquery-tablesorter.js'), 'utf8');
 
+   let currentDepth = 0;
+
+   if (rootPackageName)
+   {
+      const packageData =
+      {
+//         type: values[1],
+         name: rootPackageName,
+         fullName: rootPackageName,
+//         fullPackage: value,
+         version: 'master',
+         isAliased: false
+      };
+
+      let index = packageNodesAll.length;
+      const objectID = `root-${rootPackageName}-master`;
+
+      let object = { id: objectID, minLevel: currentDepth, packageScope: 'all', packageData, fixed: false, index };
+      packageNodesAll.push(object);
+      packageNodeMapAll.set(objectID, object);
+
+      index = packageNodesMain.length;
+      object = { id: objectID, minLevel: currentDepth, packageScope: 'main', packageData, fixed: false, index };
+      packageNodesMain.push(object);
+      packageNodeMapMain.set(objectID, object);
+
+      index = packageNodesDev.length;
+      object = { id: objectID, minLevel: currentDepth, packageScope: 'dev', packageData, fixed: false, index };
+      packageNodesDev.push(object);
+      packageNodeMapDev.set(objectID, object);
+
+      currentDepth++;
+   }
+
    // Parse top level packages
    for (const key in topLevelPackages)
    {
@@ -72,7 +102,7 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
       }
 
       let index = packageNodesAll.length;
-      let object = { id: objectID, minLevel: 0, packageScope: 'all', packageData, fixed: false, index };
+      let object = { id: objectID, minLevel: currentDepth, packageScope: 'all', packageData, fixed: false, index };
 
       if (!packageNodeMapAll.has(objectID))
       {
@@ -84,12 +114,15 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
          }
          packageNodesAll.push(object);
          packageNodeMapAll.set(objectID, object);
+
+         // If currentDepth is greater than 0 then there is a top level root node, so add a link.
+         if (currentDepth > 0) { packageLinksAll.push({ source: 0, target: index, minLevel: currentDepth }); }
       }
 
       if (typeof jspmPackageMap[key] !== 'undefined')
       {
          index = packageNodesMain.length;
-         object = { id: objectID, minLevel: 0, packageScope: 'main', packageData, fixed: false, index };
+         object = { id: objectID, minLevel: currentDepth, packageScope: 'main', packageData, fixed: false, index };
 
          if (!packageNodeMapMain.has(objectID))
          {
@@ -102,13 +135,16 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
 
             packageNodesMain.push(object);
             packageNodeMapMain.set(objectID, object);
+
+            // If currentDepth is greater than 0 then there is a top level root node, so add a link.
+            if (currentDepth > 0) { packageLinksMain.push({ source: 0, target: index, minLevel: currentDepth }); }
          }
       }
 
       if (typeof jspmDevPackageMap[key] !== 'undefined')
       {
          index = packageNodesDev.length;
-         object = { id: objectID, minLevel: 0, packageScope: 'dev', packageData, fixed: false, index };
+         object = { id: objectID, minLevel: currentDepth, packageScope: 'dev', packageData, fixed: false, index };
 
          if (!packageNodeMapDev.has(objectID))
          {
@@ -121,6 +157,9 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
 
             packageNodesDev.push(object);
             packageNodeMapDev.set(objectID, object);
+
+            // If currentDepth is greater than 0 then there is a top level root node, so add a link.
+            if (currentDepth > 0) { packageLinksDev.push({ source: 0, target: index, minLevel: currentDepth }); }
          }
       }
    }
@@ -131,9 +170,11 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
        'esdoc-plugin-dependency-graphs: s_CREATE_GRAPH_JSPM_PACKAGES --- parsing top level all dependencies');
    }
 
+   currentDepth++;
+
    // Recursively parse all dependencies
-   s_DEPTH_TRAVERSAL_NODES(_.clone(packageNodesAll), packageNodesAll, packageNodeMapAll, packageLinksAll,
-    packageLinkMapAll, 'all', 1, options);
+   s_DEPTH_TRAVERSAL_NODES(_.clone(packageNodesAll), packageNodesAll, packageNodeMapAll, packageLinksAll, 'all',
+    currentDepth, options);
 
    if (options.verbose)
    {
@@ -142,8 +183,8 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
    }
 
    // Recursively parse dev dependencies
-   s_DEPTH_TRAVERSAL_NODES(_.clone(packageNodesDev), packageNodesDev, packageNodeMapDev, packageLinksDev,
-    packageLinkMapDev, 'dev', 1, options);
+   s_DEPTH_TRAVERSAL_NODES(_.clone(packageNodesDev), packageNodesDev, packageNodeMapDev, packageLinksDev, 'dev',
+    currentDepth, options);
 
    if (options.verbose)
    {
@@ -152,8 +193,8 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
    }
 
    // Recursively parse main dependencies
-   s_DEPTH_TRAVERSAL_NODES(_.clone(packageNodesMain), packageNodesMain, packageNodeMapMain, packageLinksMain,
-    packageLinkMapMain, 'main', 1, options);
+   s_DEPTH_TRAVERSAL_NODES(_.clone(packageNodesMain), packageNodesMain, packageNodeMapMain, packageLinksMain, 'main',
+    currentDepth, options);
 
    // Determine max package level for `all` category.
    let maxPackageLevel = 0;
@@ -216,8 +257,8 @@ const s_CREATE_GRAPH_JSPM_PACKAGES = (options) =>
 };
 
  // Provides a recursive function traversing package dependencies.
-const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, packageLinks, packageLinkMap, packageScope,
- depth, options) =>
+const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, packageLinks, packageScope, depth,
+                                 options) =>
 {
    const { childPackageMap } = global['$$esdoc_plugin_jspm'];
 
@@ -301,8 +342,8 @@ const s_DEPTH_TRAVERSAL_NODES = (packageDeps, packageNodes, packageNodeMap, pack
           + `${JSON.stringify(nextLevelPackages)}`);
       }
 
-      s_DEPTH_TRAVERSAL_NODES(nextLevelPackages, packageNodes, packageNodeMap, packageLinks, packageLinkMap,
-       packageScope, depth + 1, options);
+      s_DEPTH_TRAVERSAL_NODES(nextLevelPackages, packageNodes, packageNodeMap, packageLinks, packageScope, depth + 1,
+       options);
    }
 };
 
