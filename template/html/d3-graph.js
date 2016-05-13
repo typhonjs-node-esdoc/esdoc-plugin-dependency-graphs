@@ -621,22 +621,50 @@
 
       var popupmenu = $('#contextpopup .mdl-menu__container');
 
+      var packageData = targetNode.packageData;
+
       // Populate data for the context menu.
-      popupmenu.find('li').each(function( index )
+      popupmenu.find('li').each(function(index)
       {
+         var liTarget = $(this);
+
          switch (index)
          {
             case 0:
-               $(this).text('Open on ' + targetNode.packageData.type);
-               $(this).data('extra', targetNode.packageData.link);
+               if (packageData && packageData.type && packageData.link)
+               {
+                  liTarget.text('Open on ' + packageData.type);
+                  liTarget.data('extra', packageData.link);
+                  liTarget.removeClass('hidden');
+               }
+               else
+               {
+                  liTarget.addClass('hidden');
+               }
                break;
 
             case 1:
-               $(this).text('Fullname: ' + targetNode.packageData.fullName);
+               if (packageData && packageData.fullName)
+               {
+                  liTarget.text('Fullname: ' + packageData.fullName);
+                  liTarget.removeClass('hidden');
+               }
+               else
+               {
+                  liTarget.addClass('hidden');
+               }
                break;
 
             case 2:
-               $(this).text('Version: ' + targetNode.packageData.version);
+               if (packageData && packageData.version)
+               {
+                  liTarget.text('Version: ' + packageData.version);
+                  liTarget.removeClass('hidden');
+               }
+               else
+               {
+                  liTarget.addClass('hidden');
+               }
                break;
          }
       });
