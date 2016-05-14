@@ -14,6 +14,8 @@ import GraphPackageDep  from './GraphPackageDep.js';
 
 import GraphDocBuilder  from './GraphDocBuilder.js';
 
+import packageGraphParser from './packageGraphParser.js';
+
 // Stores instances of GraphPackageDep and GraphSourceDep which generates the graphs.
 let graphPackageDep; // , graphSourceDep;
 
@@ -35,7 +37,7 @@ export function onStart(ev)
    // Stores option that if true silences logging output.
    options.verbose = typeof options.verbose === 'boolean' ? options.verbose : false;
 
-   graphPackageDep = new GraphPackageDep(options);
+   graphPackageDep = new GraphPackageDep();
 //   graphSourceDep = new GraphSourceDep(options);
 }
 
@@ -47,6 +49,8 @@ export function onStart(ev)
 export function onHandleConfig(ev)
 {
    config = ev.data.config;
+
+   packageGraphParser(options);
 
    graphPackageDep.onHandleConfig(ev);
 //   graphSourceDep.onHandleConfig(ev);
