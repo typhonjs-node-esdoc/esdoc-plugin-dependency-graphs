@@ -14,8 +14,6 @@ import GraphPackageDep  from './GraphPackageDep.js';
 
 import GraphDocBuilder  from './GraphDocBuilder.js';
 
-import packageGraphParser from './packageGraphParser.js';
-
 // Stores instances of GraphPackageDep and GraphSourceDep which generates the graphs.
 let graphPackageDep; // , graphSourceDep;
 
@@ -49,8 +47,6 @@ export function onStart(ev)
 export function onHandleConfig(ev)
 {
    config = ev.data.config;
-
-   packageGraphParser(options);
 
    graphPackageDep.onHandleConfig(ev);
 //   graphSourceDep.onHandleConfig(ev);

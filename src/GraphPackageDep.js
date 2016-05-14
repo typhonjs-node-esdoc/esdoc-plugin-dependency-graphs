@@ -1,6 +1,6 @@
+import _             from 'underscore';
 import fs            from 'fs-extra';
 import path          from 'path';
-import _             from 'underscore';
 
 // Stores the path to generated graphs.
 let docGraphPath;
@@ -27,7 +27,8 @@ export default class GraphPackageDep
       const indexHTML = fs.readFileSync(path.resolve(__dirname, '../template/html/index.html'), 'utf8');
       const tableSorter = fs.readFileSync(path.resolve(__dirname, '../template/html/jquery-tablesorter.js'), 'utf8');
 
-      const { packageGraphAll, packageGraphDev, packageGraphMain, rootPackageName } = global.$$esdoc_plugin_jspm;
+      const { rootPackageName } = global.$$esdoc_plugin_jspm;
+      const { packageGraphAll, packageGraphDev, packageGraphMain } = global.$$esdoc_plugin_jspm_package_graph;
 
       const graphPackageDataAll =
       {

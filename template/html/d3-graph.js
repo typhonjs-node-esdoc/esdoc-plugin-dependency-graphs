@@ -590,11 +590,12 @@
    {
       // When a context menu is selected remove node highlighting.
       hideNodeContextMenu();
+console.log('!! action: ' + $(this).data('action') + '; link: ' + $(this).data('link'));
 
       switch ($(this).data('action'))
       {
-         case 'openSCMLink':
-            var link = $(this).data('extra');
+         case 'openLink':
+            var link = $(this).data('link');
 
             if (typeof link === 'string')
             {
@@ -623,6 +624,39 @@
 
       var packageData = targetNode.packageData;
 
+      var packageLink, packageType, scmLink, scmType;
+
+      if (packageData)
+      {
+         if (packageData.packageLink)
+         {
+            packageLink = packageData.packageLink.link;
+            packageType = packageData.packageLink.type;
+
+            // Create proper name for package type.
+            switch (packageType)
+            {
+               case 'npm':
+                  packageType = 'NPM';
+                  break;
+            }
+         }
+
+         if (packageData.scmLink)
+         {
+            scmLink = packageData.scmLink.link;
+            scmType = packageData.scmLink.type;
+
+            // Create proper name for SCM type.
+            switch (scmType)
+            {
+               case 'github':
+                  scmType = 'Github';
+                  break;
+            }
+         }
+      }
+
       // Populate data for the context menu.
       popupmenu.find('li').each(function(index)
       {
@@ -631,10 +665,10 @@
          switch (index)
          {
             case 0:
-               if (packageData && packageData.type && packageData.link)
+               if (scmLink && scmType)
                {
-                  liTarget.text('Open on ' + packageData.type);
-                  liTarget.data('extra', packageData.link);
+                  liTarget.text('Open on ' + scmType);
+                  liTarget.data('link', scmLink);
                   liTarget.removeClass('hidden');
                }
                else
@@ -644,9 +678,10 @@
                break;
 
             case 1:
-               if (packageData && packageData.fullName)
+               if (packageLink && packageType)
                {
-                  liTarget.text('Fullname: ' + packageData.fullName);
+                  liTarget.text('Open on ' + packageType);
+                  liTarget.data('link', packageLink);
                   liTarget.removeClass('hidden');
                }
                else
@@ -862,7 +897,7 @@
       nodes.attr('class', function(node) { return formatClassName('node', node); });
       nodes.append(getSVG('circle'))
        .attr('id', function(node) { return formatClassName('id', node); })
-       .attr('class', function(node) { return formatClassName('circle', node) + ' ' + node.packageData.type; })
+       .attr('class', function(node) { return formatClassName('circle', node) + ' ' + node.packageData.jspmType; })
        .attr('r', circleRadius)
        .on('contextmenu', onNodeContextClick)
        .on('mousedown', onNodeMouseDown.bind(this, nodes, links))
@@ -889,20 +924,20 @@
        .attr('class', function(node) { return 'shadow ' + formatClassName('text', node); })
        .text(function(node)
        {
-          return (appOptions.showFullNames ? node.packageData.fullName : node.packageData.name) +
+          return (appOptions.showFullNames ? node.packageData.actualPackageName : node.packageData.packageName) +
            ' (' + node.minLevel +')';
        });
 
       nodes.append(getSVG('text'))
        .attr('class', function(node)
        {
-          return node.packageData.isAliased ? 'isAliased ' : '' + formatClassName('text', node);
+          return node.packageData.isAlias ? 'isAliased ' : '' + formatClassName('text', node);
        })
        .attr('x', 15)
        .attr('y', '.31em')
        .text(function(node)
        {
-          return (appOptions.showFullNames ? node.packageData.fullName : node.packageData.name) +
+          return (appOptions.showFullNames ? node.packageData.actualPackageName : node.packageData.packageName) +
            ' (' + node.minLevel +')';
        });
 
@@ -1068,13 +1103,13 @@
          data.nodes.forEach(function(node)
          {
             var nd = node.packageData;
-            var name = appOptions.showFullNames ? nd.fullName : nd.name;
-            var isAliased = nd.isAliased ? ' isAliased' : '';
+            var name = appOptions.showFullNames ? nd.actualPackageName : nd.packageName;
+            var isAliased = nd.isAlias ? ' isAliased' : '';
 
             var tr = $(
              '<tr>' +
                 '<td class="mdl-data-table__cell--non-numeric' + isAliased + '">' + name + '</td>' +
-                '<td class="mdl-data-table__cell--non-numeric">' + nd.type + '</td>' +
+                '<td class="mdl-data-table__cell--non-numeric">' + nd.jspmType + '</td>' +
                 '<td class="mdl-data-table__cell--non-numeric">' + nd.version + '</td>' +
                 '<td class="mdl-data-table__cell--non-numeric">' + node.minLevel + '</td>' +
              '</tr>');
