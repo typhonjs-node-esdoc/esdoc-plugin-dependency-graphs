@@ -20,6 +20,8 @@ let graphPackageDep; // , graphSourceDep;
 // Must store ESDoc configuration file and tags to use later with GraphDocBuilder.
 let config, options, tags;
 
+let processPackages = false;
+
 // ESDoc plugin callbacks -------------------------------------------------------------------------------------------
 
 /**
@@ -48,7 +50,10 @@ export function onHandleConfig(ev)
 {
    config = ev.data.config;
 
-   graphPackageDep.onHandleConfig(ev);
+   processPackages = typeof global.$$esdoc_plugin_jspm === 'object' &&
+    typeof global.$$esdoc_plugin_jspm_package_graph === 'object';
+
+   if (processPackages) { graphPackageDep.onHandleConfig(ev); }
 //   graphSourceDep.onHandleConfig(ev);
 }
 
@@ -84,7 +89,7 @@ export function onHandleTag(ev)
  */
 export function onComplete()
 {
-   graphPackageDep.onComplete();
+   if (processPackages) { graphPackageDep.onComplete(); }
 
    try
    {
