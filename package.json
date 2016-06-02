@@ -1,6 +1,6 @@
 {
   "name": "esdoc-plugin-dependency-graphs",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "homepage": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-dependency-graphs/",
   "description": "A plugin for ESDoc that adds interactive D3 powered dependency graphs for source code including linking JSPM / NPM managed code and packages.",
   "license": "MPL-2.0",
@@ -18,7 +18,10 @@
     }
   ],
   "dependencies": {
+    "cheerio": "^0.20.0",
     "fs-extra": "^0.30.0",
+    "ice-cap": "^0.0.4",
+    "taffydb": "^2.0.0",
     "underscore": "^1.0.0"
   },
   "devDependencies": {
